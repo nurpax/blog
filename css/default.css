@@ -1,6 +1,6 @@
 
 body {
-    min-width: 880px;
+    width: 783px;
     font-family: Georgia, 'Times New Roman', Times, sans-serif;
     font-size: 14px;
     line-height: 1.5;
@@ -13,14 +13,28 @@ h1, h2, h3, h4 {
     text-decoration:none;
 }
 
-h1#header {
+#header {
+  background:#fff;
+  padding-top: 6px;
+  padding-left: 0px;
+  padding-right: 0px;
+  padding-bottom: 0px;
+  background-image: url('/images/bloghead2.jpg');
+  background-repeat: no-repeat;
+  border-top: 2px solid black;
+  border-bottom: 2px solid black;
+}
+
+#header h1 {
     text-transform:uppercase;
     letter-spacing:0.2em;
+    padding-left:0.4em;
+    color:#fff;
+    text-shadow: 3px 3px 5px #000;
 }
 
 div#navigation {
     text-align: left;
-    border-bottom: 4px solid black;
 }
 
 div#navigation a {
