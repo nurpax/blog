@@ -1,10 +1,25 @@
+
 body {
-    width: 600px;
-    margin: 0px auto 0px auto;
+    min-width: 880px;
+    font-family: Georgia, 'Times New Roman', Times, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #1a1a1a;
+    background: #fff;
+}
+
+h1, h2, h3, h4 {
+    font-family:'Lucida Grande', Helvetica, Arial, sans-serif;
+    text-decoration:none;
+}
+
+h1#header {
+    text-transform:uppercase;
+    letter-spacing:0.2em;
 }
 
 div#navigation {
-    text-align: center;
+    text-align: left;
     border-bottom: 4px solid black;
 }
 
