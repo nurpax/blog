@@ -1,28 +1,35 @@
 
 body {
-    width: 783px;
     font-family: Georgia, 'Times New Roman', Times, sans-serif;
-    font-size: 14px;
+    font-size: 1.1em;
     line-height: 1.5;
-    color: #1a1a1a;
-    background: #fff;
+    color: #333;
+    background: #dcdcda;
+    padding: 0.5em;
 }
 
 h1, h2, h3, h4 {
     font-family:'Lucida Grande', Helvetica, Arial, sans-serif;
     text-decoration:none;
+    color:#444;
+}
+
+#page-wrap {
+    width: 783px;
+    margin: 1em auto;
+    padding: 1em;
+    background:#fff;
+    border: 1px solid #bbb;
 }
 
 #header {
-  background:#fff;
   padding-top: 6px;
   padding-left: 0px;
   padding-right: 0px;
   padding-bottom: 0px;
   background-image: url('/images/bloghead2.jpg');
   background-repeat: no-repeat;
-  border-top: 2px solid black;
-  border-bottom: 2px solid black;
+  border: 1px solid #333;
 }
 
 #header h1 {
@@ -35,6 +42,7 @@ h1, h2, h3, h4 {
 
 div#navigation {
     text-align: left;
+    font-family:'Lucida Grande', Helvetica, Arial, sans-serif;
 }
 
 div#navigation a {
@@ -43,4 +51,6 @@ div#navigation a {
     background-color: black;
     padding: 3px 10px 3px 10px;
     margin: 0px 10px 0px 10px;
+    font-weight: bold;
+    letter-spacing:0.15em;
 }
