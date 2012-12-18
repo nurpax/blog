@@ -29,7 +29,7 @@ h1, h2, h3, h4 {
   padding-bottom: 0px;
   background-image: url('/images/bloghead2.jpg');
   background-repeat: no-repeat;
-  border: 1px solid #333;
+  border: 0px solid #000;
 }
 
 #header h1 {
