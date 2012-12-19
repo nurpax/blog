@@ -27,7 +27,7 @@ h1, h2, h3, h4 {
   padding-left: 0px;
   padding-right: 0px;
   padding-bottom: 0px;
-  background-image: url('/images/bloghead2.jpg');
+  background-image: url(/images/bloghead2.jpg);
   background-repeat: no-repeat;
   border: 0px solid #000;
 }
@@ -53,4 +53,14 @@ div#navigation a {
     margin: 0px 10px 0px 10px;
     font-weight: bold;
     letter-spacing:0.15em;
+}
+
+div.screenshot {
+    text-align:center;
+
+}
+
+/* for screenshots with whitebackground, add a very dim border */
+div.white-bg img {
+  border: 1px dashed #ccc;
 }
