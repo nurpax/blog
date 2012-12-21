@@ -65,8 +65,8 @@ addPostList = setFieldA "posts" $
 
 feedConfiguration :: FeedConfiguration
 feedConfiguration = FeedConfiguration
-    { feedTitle       = "Haskell thoughts"
-    , feedDescription = "Notes on programming"
+    { feedTitle       = "nurpax.github.com blog"
+    , feedDescription = "Notes on programming in Haskell"
     , feedAuthorName  = "Janne Hellsten"
     , feedAuthorEmail = "jjhellst@gmail.com"
     , feedRoot        = "http://nurpax.github.com"

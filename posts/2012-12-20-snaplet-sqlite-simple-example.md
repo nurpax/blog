@@ -16,21 +16,21 @@ quickly prototyping database-backed web apps -- you don't need to
 configure a separate SQL server just to run your web app.
 
 
-While the new snaplet-sqlite-simple release doesn't add any
-significant new functionality over previous versions, I thought a few
-things in its [example
+While the new snaplet-sqlite-simple 0.3 release doesn't add any
+significant new functionality, I thought a few things in its [example
 project](https://github.com/nurpax/snaplet-sqlite-simple/tree/master/example/src)
 would be worth a mention.
 
 This example project implements a simple web app that has a login
-screen (with new user registration) and a main page that logged in
-users can use to add comments.  Users and comments are both persisted
-into an SQLite3 database.
+screen (with new user registration) and a main page where logged in
+users can drop comments.  Users and comments are both persisted into
+an SQLite3 database.
 
-Here's a couple of screenshots to show how it looks like.  Let's start with the login screen:
+Here's a couple of screenshots to show how it looks like.  Let's start
+with the login screen:
 
 <div class="screenshot white-bg">
-![](/images/snaplet-sqlite-simple-example-login.png "Login")
+![](/images/snaplet-sqlite-simple-example-login.png "Login screen")
 </div>
 
 If you create a new user and login to the app, you're taken to the
@@ -40,7 +40,7 @@ get persisted into a database and are associated with the current user
 like:
 
 <div class="screenshot white-bg">
-![](/images/snaplet-sqlite-simple-example-comments.png "Login")
+![](/images/snaplet-sqlite-simple-example-comments.png "Main page")
 </div>
 
 The example demonstrates a few basic concepts in a complete example:
@@ -104,4 +104,16 @@ mainPage = withLoggedInUser go
       heistLocal (splices comments) $ render "/index"
     splices cs =
       I.bindSplices [("comments", I.mapSplices renderComment cs)]
+~~~~~
+
+To play more with this code, I recommend that you clone the code from
+Git, try to build the example and play with the app:
+
+
+~~~~~{.bash}
+git clone git://github.com/nurpax/snaplet-sqlite-simple.git
+cd example
+cabal-dev install
+./cabal-dev/bin/example
+# browse to http://localhost:8000
 ~~~~~
