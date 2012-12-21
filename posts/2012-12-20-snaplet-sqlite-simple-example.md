@@ -106,9 +106,10 @@ mainPage = withLoggedInUser go
       I.bindSplices [("comments", I.mapSplices renderComment cs)]
 ~~~~~
 
-To play more with this code, I recommend that you clone the code from
-Git, try to build the example and play with the app:
-
+To learn more about using sqlite-simple with Snap, I recommend you
+clone the code from Git, build the example, play with the app and read
+the
+[example source code](https://github.com/nurpax/snaplet-sqlite-simple/tree/master/example/src).
 
 ~~~~~{.bash}
 git clone git://github.com/nurpax/snaplet-sqlite-simple.git
