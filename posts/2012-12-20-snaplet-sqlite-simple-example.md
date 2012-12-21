@@ -7,7 +7,7 @@ description: On snaplet-sqlite-simple and its example code
 
 I recently released [snaplet-sqlite-simple
 0.3](http://hackage.haskell.org/package/snaplet-sqlite-simple), a
-compatibility update the recently released [Snap
+compatibility update for the recently released [Snap
 0.10](http://hackage.haskell.org/package/snap).  This library is glue
 for hooking up a Snap application to an SQLite3 database using the
 [sqlite-simple](http://hackage.haskell.org/package/sqlite-simple)
