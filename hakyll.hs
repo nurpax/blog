@@ -7,6 +7,7 @@ import Control.Arrow ((>>>), (***), arr)
 import Data.Monoid (mempty, mconcat)
 
 import Hakyll
+import Hakyll.Web.Page.Metadata
 
 main :: IO ()
 main = hakyll $ do
@@ -23,6 +24,7 @@ main = hakyll $ do
     match "posts/*" $ do
         route   $ setExtension ".html"
         compile $ pageCompiler
+            >>> arr (copyBodyToField "description")
             >>> applyTemplateCompiler "templates/post.html"
             >>> applyTemplateCompiler "templates/default.html"
             >>> relativizeUrlsCompiler
