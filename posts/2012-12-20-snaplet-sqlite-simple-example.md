@@ -1,5 +1,5 @@
 ---
-title: Snap with SQLite3
+title: Snap with SQLite
 author: Janne Hellsten
 date: December 20, 2012
 description: On snaplet-sqlite-simple and its example code
@@ -9,7 +9,8 @@ I recently released [snaplet-sqlite-simple
 0.3](http://hackage.haskell.org/package/snaplet-sqlite-simple), a
 compatibility update for the recently released [Snap
 0.10](http://hackage.haskell.org/package/snap).  This library is glue
-for hooking up a Snap application to an SQLite3 database using the
+for hooking up a Snap application to an
+[SQLite](http://www.sqlite.org/) database using the
 [sqlite-simple](http://hackage.haskell.org/package/sqlite-simple)
 library.  Using SQLite with Snap is a handy, light-weight approach for
 quickly prototyping database-backed web apps -- you don't need to
@@ -24,7 +25,7 @@ would be worth a mention.
 This example project implements a simple web app that has a login
 screen (with new user registration) and a main page where logged in
 users can drop comments.  Users and comments are both persisted into
-an SQLite3 database.
+an SQLite database.
 
 Here's a couple of screenshots to show how it looks like.  Let's start
 with the login screen:
