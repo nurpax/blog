@@ -8,10 +8,36 @@ body {
     padding: 0.5em;
 }
 
+pre, code {
+  font-size:12px;
+}
+
+li {
+  display: list-item;
+}
+
+ul, menu, dir {
+  list-style-type: disc;
+}
+
+p {
+    margin: 1em 0px;
+}
+
+h1 {
+  display: block;
+  font-size: 1.6em;
+  -webkit-margin-before: 0.67em;
+  -webkit-margin-after: 0.67em;
+  -webkit-margin-start: 0px;
+  -webkit-margin-end: 0px;
+}
+
 h1, h2, h3, h4 {
     font-family:'Lucida Grande', Helvetica, Arial, sans-serif;
     text-decoration:none;
     color:#444;
+    font-weight: bold;
 }
 
 #page-wrap {
