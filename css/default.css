@@ -12,6 +12,9 @@ pre, code {
   font-size:12px;
 }
 
+a:link, a:visited, a:active {  text-decoration:none;  color:#579;}
+a:hover { text-decoration:underline;}
+
 li {
   display: list-item;
 }
