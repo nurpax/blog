@@ -50,7 +50,9 @@ main = hakyll $ do
     -- Render RSS feed
     match  "rss.xml" $ route idRoute
     create "rss.xml" $
-        requireAll_ "posts/*" >>> renderRss feedConfiguration
+        requireAll_ "posts/*"
+        >>> arr (reverse . chronological)
+        >>> renderRss feedConfiguration
 
     -- Read templates
     match "templates/*" $ compile templateCompiler
