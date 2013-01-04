@@ -11,7 +11,7 @@ least not with
 I recently implemented a To-Do app (the "Hello World" of web apps)
 using [AngularJS](http://angularjs.org/) on the frontend and
 [Snap](http://snapframework.com/) on the backend.  If you haven't
-heard about AngularJS I highly recommend you to check it out -- it's
+heard about AngularJS, I highly recommend you to check it out -- it's
 got a very clean approach to developing modern single-page web apps.
 
 In my app, the Snap-based server was used mainly for authentication
