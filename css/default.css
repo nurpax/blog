@@ -10,6 +10,7 @@ body {
 
 pre, code {
   font-size:12px;
+  margin-top:0px;
 }
 
 a:link, a:visited, a:active {  text-decoration:none;  color:#579;}
@@ -36,7 +37,7 @@ h1 {
   -webkit-margin-end: 0px;
 }
 
-h1, h2, h3, h4 {
+h1, h2, h3, h4, h5 {
     font-family:'Lucida Grande', Helvetica, Arial, sans-serif;
     text-decoration:none;
     color:#444;
