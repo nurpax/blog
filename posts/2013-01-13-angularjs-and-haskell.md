@@ -4,7 +4,7 @@ author: Janne Hellsten
 date: January 13, 2013
 ---
 
-### Introduction
+## Introduction
 
 I recently wrote a simple To-Do app in [AngularJS][angularjs] using
 the Haskell web development framework called [Snap][snap].  I started
@@ -44,13 +44,13 @@ server takes care of user management, authentication and persistence.
 The frontend talks to the backend via a REST API.  The REST API
 communicates things like adding or listing to-do items.
 
-### Frontend JavaScript parts
+## Frontend JavaScript parts
 
 The main client-side source files are:
 
-* [static/index.html]: Application frontpage
-* [static/todo.js]: Controller for to-do items
-* [static/services.js]: Model definition
+* [static/index.html] - Application frontpage
+* [static/todo.js] - Controller for to-do items
+* [static/services.js] - Model definition
 
 The "AngularJS application" is defined [static/index.html].  It
 contains definitions on how to display the main page, how to list
@@ -64,13 +64,13 @@ The `Todo` service is defined [static/services.js].  It defines the
 client-server interface for accessing user's to-do items, providing
 methods such as `Todo.query()` and `Todo.save()`.
 
-### The Haskell backend
+## The Haskell backend
 
 The most interesting server parts can be found in the following source
 files:
 
-* [src/Site.hs]: Main server module (login, authentication, REST)
-* [src/Db.hs]: Model definition (types, JSON serialization, database persistence)
+* [src/Site.hs] - Main server module (login, authentication, REST)
+* [src/Db.hs] - Model definition (types, JSON serialization, database persistence)
 
 The model definition of our to-do app is quite simple.  The main type
 is the `Todo` item:
@@ -165,7 +165,7 @@ from [Snap.Extras.JSON][snap-extras-json].  Similarly, we use
 encode and decode is made possible by the `FromJSON` and `ToJSON`
 instances defined in the [Db][src/Db.hs] module.
 
-### Debugging JSON responses
+## Debugging JSON responses
 
 A good way to debug your REST APIs is to use Chrome's Developer Tools.
 Open the Developer console and click on the Network tab.  When you
@@ -180,7 +180,7 @@ complete a to-do:
 
 This is the result of a `todo.$save()` AJAX call.
 
-### What next?
+## What next?
 
 Well..  The easy part is over.  If you want to learn more about using
 AngularJS with Snap, I suggest that you:

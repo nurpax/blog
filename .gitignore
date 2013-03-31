@@ -2,3 +2,4 @@ cabal-dev/
 _site/
 _cache/
 dist/
+TAGS

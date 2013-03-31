@@ -1,16 +1,29 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import Prelude hiding (id)
-import Control.Category (id)
-import Control.Arrow ((>>>), (***), arr)
-import Data.Monoid (mempty, mconcat)
+import           Data.Monoid     (mappend, mconcat)
+import           Prelude         hiding (id)
 
-import Hakyll
-import Hakyll.Web.Page.Metadata
+import           Hakyll
+
+postCtx :: Context String
+postCtx = mconcat
+    [ modificationTimeField "mtime" "%U"
+    , dateField "date" "%B %e, %Y"
+    , defaultContext
+    ]
+
+feedCtx :: Context String
+feedCtx = mconcat
+    [ bodyField "description"
+    , defaultContext
+    ]
+
+config :: Configuration
+config = defaultConfiguration
 
 main :: IO ()
-main = hakyll $ do
+main = hakyllWith config $ do
     -- Compress CSS
     match "css/*" $ do
         route   idRoute
@@ -23,49 +36,56 @@ main = hakyll $ do
     -- Render posts
     match "posts/*" $ do
         route   $ setExtension ".html"
-        compile $ pageCompiler
-            >>> arr (copyBodyToField "description")
-            >>> applyTemplateCompiler "templates/post.html"
-            >>> applyTemplateCompiler "templates/default.html"
-            >>> relativizeUrlsCompiler
+        compile $ pandocCompiler
+            >>= saveSnapshot "content"
+            >>= return . fmap demoteHeaders
+            >>= loadAndApplyTemplate "templates/post.html" postCtx
+            >>= loadAndApplyTemplate "templates/default.html" postCtx
+            >>= relativizeUrls
 
-    -- Render posts list
-    match  "posts.html" $ route idRoute
-    create "posts.html" $ constA mempty
-        >>> arr (setField "title" "All posts")
-        >>> requireAllA "posts/*" addPostList
-        >>> applyTemplateCompiler "templates/posts.html"
-        >>> applyTemplateCompiler "templates/default.html"
-        >>> relativizeUrlsCompiler
+    -- Post list
+    create ["posts.html"] $ do
+        route idRoute
+        compile $ do
+            list <- postList "posts/*" recentFirst
+            makeItem ""
+              >>= loadAndApplyTemplate "templates/posts.html"
+                    (constField "posts" list `mappend` defaultContext)
+              >>= loadAndApplyTemplate "templates/default.html"
+                    (constField "title" "All posts" `mappend` defaultContext)
+              >>= relativizeUrls
 
     -- Index
-    match  "index.html" $ route idRoute
-    create "index.html" $ constA mempty
-        >>> arr (setField "title" "Home")
-        >>> requireAllA "posts/*" (id *** arr (take 3 . reverse . chronological) >>> addPostList)
-        >>> applyTemplateCompiler "templates/index.html"
-        >>> applyTemplateCompiler "templates/default.html"
-        >>> relativizeUrlsCompiler
+    create ["index.html"] $ do
+        route idRoute
+        compile $ do
+            list <- postList "posts/*" (fmap (take 10) . recentFirst)
+            let ctx = constField "posts" list `mappend`
+                      constField "title" "Home" `mappend`
+                      defaultContext
+
+            makeItem list
+              >>= loadAndApplyTemplate "templates/index.html" ctx
+              >>= loadAndApplyTemplate "templates/default.html" ctx
+              >>= relativizeUrls
 
     -- Render RSS feed
-    match  "rss.xml" $ route idRoute
-    create "rss.xml" $
-        requireAll_ "posts/*"
-        >>> arr (reverse . chronological)
-        >>> renderRss feedConfiguration
+    create ["rss.xml"] $ do
+        route idRoute
+        compile $ do
+            loadAllSnapshots "posts/*" "content"
+                >>= fmap (take 10) . recentFirst
+                >>= renderAtom (feedConfiguration) feedCtx
 
     -- Read templates
     match "templates/*" $ compile templateCompiler
 
--- | Auxiliary compiler: generate a post list from a list of given posts, and
--- add it to the current page under @$posts@
---
-addPostList :: Compiler (Page String, [Page String]) (Page String)
-addPostList = setFieldA "posts" $
-    arr (reverse . chronological)
-        >>> require "templates/postitem.html" (\p t -> map (applyTemplate t) p)
-        >>> arr mconcat
-        >>> arr pageBody
+postList :: Pattern -> ([Item String] -> Compiler [Item String])
+         -> Compiler String
+postList pattern preprocess' = do
+    postItemTpl <- loadBody "templates/postitem.html"
+    posts       <- preprocess' =<< loadAll pattern
+    applyTemplateList postItemTpl postCtx posts
 
 feedConfiguration :: FeedConfiguration
 feedConfiguration = FeedConfiguration

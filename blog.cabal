@@ -12,4 +12,4 @@ executable blog
   hs-source-dirs:    .
   main-is:           hakyll.hs
   build-depends:     base == 4.5.*
-                   , hakyll
+                   , hakyll >= 4.2.0.0
