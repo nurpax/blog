@@ -2,6 +2,7 @@
 title: AngularJS with Haskell
 author: Janne Hellsten
 date: January 13, 2013
+public: true
 ---
 
 ## Introduction

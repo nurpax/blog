@@ -2,6 +2,7 @@
 title: Reading TCX in Haskell
 author: Janne Hellsten
 date: December 27, 2012
+public: true
 ---
 
 I use a Garmin GPS/heart-rate monitor watch to track my running.  I

@@ -3,6 +3,7 @@ title: Snap with SQLite
 author: Janne Hellsten
 date: December 20, 2012
 description: On snaplet-sqlite-simple and its example code
+public: true
 ---
 
 I recently released [snaplet-sqlite-simple

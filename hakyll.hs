@@ -1,10 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import           Data.Monoid     (mappend, mconcat)
-import           Prelude         hiding (id)
+import           Control.Monad (filterM)
+import           Data.Monoid   (mappend, mconcat)
 
 import           Hakyll
+import           Hakyll.Core.Metadata
 
 postCtx :: Context String
 postCtx = mconcat
@@ -21,6 +22,13 @@ feedCtx = mconcat
 
 config :: Configuration
 config = defaultConfiguration
+
+publicOnly :: (MonadMetadata m, Functor m) => m [Item a] -> m [Item a]
+publicOnly i = i >>= \lst -> filterM isPublic lst
+  where
+    isPublic i = do
+      f <- getMetadataField (itemIdentifier i) "public"
+      return $ f == Just "true"
 
 main :: IO ()
 main = hakyllWith config $ do
@@ -47,7 +55,7 @@ main = hakyllWith config $ do
     create ["posts.html"] $ do
         route idRoute
         compile $ do
-            list <- postList "posts/*" recentFirst
+            list <- postList "posts/*" (publicOnly . recentFirst)
             makeItem ""
               >>= loadAndApplyTemplate "templates/posts.html"
                     (constField "posts" list `mappend` defaultContext)
@@ -59,7 +67,7 @@ main = hakyllWith config $ do
     create ["index.html"] $ do
         route idRoute
         compile $ do
-            list <- postList "posts/*" (fmap (take 10) . recentFirst)
+            list <- postList "posts/*" (fmap (take 10) . publicOnly . recentFirst)
             let ctx = constField "posts" list `mappend`
                       constField "title" "Home" `mappend`
                       defaultContext
@@ -74,8 +82,8 @@ main = hakyllWith config $ do
         route idRoute
         compile $ do
             loadAllSnapshots "posts/*" "content"
-                >>= fmap (take 10) . recentFirst
-                >>= renderAtom (feedConfiguration) feedCtx
+                >>= fmap (take 10) . publicOnly . recentFirst
+                >>= renderAtom feedConfiguration feedCtx
 
     -- Read templates
     match "templates/*" $ compile templateCompiler

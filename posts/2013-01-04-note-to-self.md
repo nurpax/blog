@@ -2,6 +2,7 @@
 title: Note to self
 author: Janne Hellsten
 date: January 4, 2013
+public: true
 ---
 
 Note to self: Don't use SQLite3 from multiple Haskell threads -- at
