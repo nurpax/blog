@@ -1,52 +1,45 @@
 ---
 title: Benchmarking sqlite-simple
 author: Janne Hellsten
-date: April 2, 2013
+date: August 13, 2013
 public: false
 ---
 
-## TOPICS
-
-* TODO:
-  - check which is a good single value to report from criterion results (see crit docs)
-
 ## Introduction
 
-In this post, I will talk about benchmarking [sqlite-simple] and about
-the various optimizations that were made to [sqlite-simple] and
-[direct-sqlite].  In addition to SQLite results, I will also compare
-my results to other database and other Haskell bindings.  Comparisons
-to other database libraries are provided as a kind of sanity check to
-validate that my performance numbers are in the right ballpark.
+I recently benchmarked [sqlite-simple].  This post presents the
+results of this work and the effects of various optimizations made to
+[sqlite-simple] and [direct-sqlite].  In addition to SQLite results, I
+will also compare my results to other database and other Haskell
+bindings.  Comparisons to other database libraries are provided as a
+kind of sanity check to validate that my performance numbers are in
+the right ballpark.
 
-I will not list the usual disclaimers about micro-benchmarks.  You all
-know what kind of pitfalls there are to benchmarking.  Comparisons to
-code I haven't written will probably be unfair -- I've tuned my code
-to do well in my benchmark while I haven't gone through similar
-analysis and tuning for other database libraries.
+The usual micro-benchmarking disclaimers apply.  Comparisons to code I
+haven't written can be unfair -- I've tuned my code to do well in my
+benchmark while I haven't gone through similar analysis and tuning for
+other database libraries.
 
-I'd like to thank [Emmanuel Surleau](https://github.com/Emm) for his
-optimization ideas and contributions to sqlite-simple.
+Thanks to [Emmanuel Surleau](https://github.com/Emm), [Irene
+Knapp](https://github.com/IreneKnapp) and [Joey
+Adams](https://github.com/joeyadams) for their optimization ideas,
+contributions and code reviews.
 
-TODO thank irene and joey too
-
-## Performance targets
+## Establishing performance targets
 
 My benchmarking goal was to figure out how much overhead does the
 sqlite-simple library add on top of raw SQLite performance.  Ideally,
 a query should spend all its time in native SQLite and zero time in
 Haskell bindings.
 
-I wanted to start with reasonable performance targets.  I find that
-it's much easier to focus optimization on relevant things if you
-can work against well-defined performance targets.  With good targets,
-you will also know when it's time to stop optimizing. :)
+To better focus optimization work, I first set out to establish some
+reasonable performance targets to compare against
 
-Establishing targets was pretty easy.  As sqlite-simple runs on top of
-direct-sqlite, the sqlite-simple can only be as fast as direct-sqlite.
-As direct-sqlite in turn runs on top of the native SQLite library, the
-fastest sqlite-simple and direct-sqlite can possibly go is as fast as
-SQLite.
+Establishing targets was straightforward.  As sqlite-simple runs on
+top of direct-sqlite, the sqlite-simple can only be as fast as
+direct-sqlite.  As direct-sqlite runs on top of the native SQLite
+library, the fastest sqlite-simple and direct-sqlite can possibly go
+is as fast as SQLite.
 
 To turn this into numbers, I implemented multiple versions of my query
 benchmark (in order of fastest to slowest):
@@ -65,9 +58,6 @@ Here's how they perform:
 Initially sqlite-simple scored barely over 53K rows/s.  After all a
 bunch of optimizations the same figure was 1.8M/s, a nice 34x
 improvement.
-
-I will go into more details later in this post.  But before that,
-let's describe the query benchmark in more detail.
 
 ## What was benchmarked
 
@@ -138,28 +128,24 @@ respectively.
     * [postgresql-libpq-0.8.2.1](http://hackage.haskell.org/package/postgresql-libpq-0.8.2.1)
 
 
-## Analysis of sqlite-simple results
+## Result analysis
 
-All this benchmarking would be for nothing if we didn't analyze the
-data and take action on it.  With performance targets based on running
-native SQLite and direct-sqlite benchmarks, it was easy to identify
-several optimizations to sqlite-simple.
+The collected benchmark data was used to identify various performance
+improvement opportunities in sqlite-simple.
 
-Here's a a graph of how sqlite-simple performance progressed over time
-as various optimizations were applied:
+Here's a graph of sqlite-simple performance progression through
+various optimizations:
 
 <div>
 #### Optimization progress (rows/s)
 <div id="chart-opt-progress" style="width:600px;height:360px;"></div>
 </div>
 
-We started off with an abysmal 53K rows/s.  This was an embarrassing
-regression I created when I forked sqlite-simple from
-postgresql-simple.  The problem was in a function called `stepStmt`
-which should've been tail recursive but wasn't.  I suspect it was also
-too lazy -- but I never verified this.  Fixing this in
-[d2b6f6a5][opt-tail-call] was a major improvement and bumped up the
-score from 53K to 750K rows/s.
+The first result was as low as 53K rows/s.  This was a performance bug
+I caused when I forked sqlite-simple from postgresql-simple.  The
+problem was in a function called `stepStmt` that should've been tail
+recursive but wasn't.  Fixing this in [d2b6f6a5][opt-tail-call] nicely
+bumped up the score from 53K to 750K rows/s.
 
 The next couple of optimizations dealt mostly with clean up that lead
 to reduced allocation.  With [3239d474f0][dofold] and
@@ -179,9 +165,10 @@ turn the comparison into absolute clock cycles.  On my 3.2GHz machine,
 Similarly, at 2.43M rows/s on direct-sqlite, each row cost roughly
 1300 clock cycles out of which 460 was spent in the native SQLite
 library.  Somehow roughly 840 clock cycles per row were spent in the
-SQLite Haskell bindings.  The overhead in calling into SQLite was
-higher than the actual cost of returning the query results!  Yet,
-there wasn't much going on in the wrapper library.
+SQLite Haskell bindings.  The overhead of just calling into SQLite
+from Haskell was higher than the actual cost of computing the result
+set inside SQLite!  Yet, there wasn't much going on in the wrapper
+library.
 
 Consider the innerloop of the direct-sqlite benchmark:
 
@@ -207,12 +194,12 @@ in the C version of this benchmark.
 
 No matter how bad a compiler you might have, there's no way that the
 simple Haskell code around `sqlite3_step` and `sqlite3_column_int`
-would take 840 clocks per row.
+would add up to 840 clocks per row.
 
-Turns out it's the FFI call overhead that dominated this benchmark.
-In our case it was possible to reduce this overhead by using the
-`unsafe` FFI calling convention for some of the SQLite column
-accessors.  This change was made in direct-sqlite [pull request
+Turns out FFI call overhead dominated this benchmark.  It was possible
+to reduce this overhead by using the `unsafe` FFI calling convention
+for some of the SQLite column accessors.  This change was made in
+direct-sqlite [pull request
 #20](https://github.com/IreneKnapp/direct-sqlite/pull/20).  As the
 name `unsafe` implies, it's not OK to simply mark all FFI functions as
 unsafe -- please refer to the pull request discussion for details.
@@ -228,8 +215,8 @@ bumped up the sqlite-simple score up by roughly 1M rows/s.
 ## Comparing to other implementations and databases
 
 I thought it'd be interesting to compare my results to other databases
-and also other Haskell database bindings.  Furthermore, I wanted to
-know how fast Python fares with its built-in sqlite3 module.  So I
+and also to other Haskell database bindings.  Furthermore, I wanted to
+know how well Python fares with its built-in sqlite3 module.  So I
 implemented a few more variants of my benchmark:
 
 * mysql-simple ([source](https://github.com/nurpax/db-bench/tree/master/haskell/Mysql.hs))
@@ -244,18 +231,24 @@ implemented a few more variants of my benchmark:
 
 I didn't do any performance analysis for non-sqlite benchmark results,
 and wouldn't draw too many conclusions about the results.  These
-results do seem to confirm though that the HDBC library seems to add
-fairly significant overhead to database access.  Comparing HDBC
-against sqlite-simple, we get 105K vs 1.8M rows/sec.
+results do seem to confirm though that the HDBC library adds a fairly
+significant overhead to database row access.  Comparing HDBC against
+sqlite-simple, we get 105K vs 1.8M rows/sec.
 
-## Conclusion
+## Next steps
 
-TODO:
+There are still a few ways on how this benchmark could be improved:
 
-* Lessons learned?
-* Next steps - e.g., benchmark other data conversions like dates which are known to be slow
+1. Benchmark with more columns in the results
+2. Benchmark type conversion speed of different column types
+3. Benchmark per-query overhead
 
+I expect especially per-query overhead to be an important metric for
+web applications.  The typical usage in web apps would be that a
+single page load performs several queries with relatively low number
+of rows returned by each query.
 
+Until next time.
 
 <script type="text/javascript">
 function barchart(divname, legendPos, data)
