@@ -10,12 +10,12 @@ public: false
 I recently benchmarked my Haskell SQLite bindings package
 [sqlite-simple].  I was curious to know how sqlite-simple performance
 compares to native C, Python and other Haskell database bindings.
-Initial benchmark results for sqlite-simple were extremely poor but
-improved significantly after optimizations.  This post will present
-the results of this benchmarking.  It also discusses some of the
-optimizations that resulted from this performance analysis.
+Initial results for sqlite-simple were extremely poor but improved
+significantly after optimizations.  This post will present the results
+of this benchmarking.  It also discusses some of the optimizations
+that resulted from this performance analysis.
 
-Initially sqlite-simple scored barely over 53K rows/s.  Optimizations
+Initially sqlite-simple scored barely over 50K rows/s.  Optimizations
 brought this up to 1.8M rows/s, a nice 34x improvement.
 
 ## Setup
@@ -84,15 +84,15 @@ respectively.
 
 ## Establishing performance targets
 
-My benchmarking goal was to figure out how much overhead does the
-sqlite-simple library add on top of raw SQLite performance.  Ideally,
+My benchmarking goal was to figure out how much overhead the
+sqlite-simple library adds on top of raw SQLite performance.  Ideally,
 a query should spend all its time in native SQLite and zero time in
 Haskell bindings.
 
 To better focus optimization work, I first set out to establish some
 reasonable performance targets to compare against.  Establishing
 targets was straightforward.  As sqlite-simple runs on top of
-[direct-sqlite], the sqlite-simple can only be as fast as direct-sqlite.
+direct-sqlite, the sqlite-simple can only be as fast as direct-sqlite.
 As direct-sqlite runs on top of the native SQLite library, the fastest
 sqlite-simple and direct-sqlite can possibly go is as fast as SQLite.
 
@@ -116,7 +116,7 @@ Here's how they perform:
 The collected benchmark data was used to identify various performance
 improvement opportunities in sqlite-simple.
 
-Original performance without optimizations was a just barely over 50K
+Original performance without optimizations was just barely over 50K
 rows/s.  This was a performance bug I caused when I forked
 sqlite-simple from postgresql-simple.  The problem was in a function
 called `stepStmt` that should've been tail recursive but wasn't.
@@ -140,8 +140,8 @@ turn the comparison into absolute clock cycles.  On my 3.2GHz machine,
 
 Similarly, at 2.43M rows/s on direct-sqlite, each row cost roughly
 1300 clock cycles out of which 460 was spent in the native SQLite
-library.  Somehow roughly 840 clock cycles per row were spent in the
-SQLite Haskell bindings.  The overhead of just calling into SQLite
+library.  Somehow roughly 840 clock cycles per row were spent in
+Haskell SQLite bindings.  The overhead of just calling into SQLite
 from Haskell was higher than the actual cost of computing the result
 set inside SQLite!  Yet, there wasn't much going on in the wrapper
 library.
@@ -168,9 +168,9 @@ directly to their native SQLite counterparts
 Thus the expectation is that their cost should be roughly the same as
 in the C version of this benchmark.
 
-No matter how bad a compiler you might have, there's no way that the
-simple Haskell code around `sqlite3_step` and `sqlite3_column_int`
-would add up to 840 clocks per row.
+No matter how bad a compiler you might have, there's no way the simple
+Haskell code around `sqlite3_step` and `sqlite3_column_int` would add
+up to 840 clocks per row.
 
 Turns out FFI call overhead dominated this benchmark.  It was possible
 to reduce this overhead by using the `unsafe` FFI calling convention
@@ -222,17 +222,16 @@ sqlite-simple, we get 105K vs 1.8M rows/s.
 
 ## Next steps
 
-There are still many areas that would benefit from further
-benchmarking:
+There are still many areas that would need further analysis:
 
-* Use more columns in result sets
-* Use other column types than Int's
+* Use more columns in the result set
+* Use other column types than `Int`s
 * Per-query overhead
 
-I expect especially per-query overhead to be an important metric for
-web applications.  The typical usage in web apps would be that a
-single page load performs several queries with relatively low number
-of rows returned by each query.
+I expect low per-query overhead to be particularly important for web
+applications.  The typical usage in web apps would be that a single
+page load performs several queries with relatively low number of rows
+returned by each query.
 
 Thanks to [Emmanuel Surleau](https://github.com/Emm), [Irene
 Knapp](https://github.com/IreneKnapp) and [Joey
