@@ -7,57 +7,32 @@ public: false
 
 ## Introduction
 
-I recently benchmarked [sqlite-simple].  This post presents the
-results of this work and the effects of various optimizations made to
-[sqlite-simple] and [direct-sqlite].  In addition to SQLite results, I
-will also compare my results to other database and other Haskell
-bindings.  Comparisons to other database libraries are provided as a
-kind of sanity check to validate that my performance numbers are in
-the right ballpark.
+I recently benchmarked my Haskell SQLite bindings package
+[sqlite-simple].  I was curious to know how sqlite-simple performance
+compares to native C, Python and other Haskell database bindings.
+Initial benchmark results for sqlite-simple were extremely poor but
+improved significantly after optimizations.  This post will present
+the results of this benchmarking.  It also discusses some of the
+optimizations that resulted from this performance analysis.
 
-The usual micro-benchmarking disclaimers apply.  Comparisons to code I
-haven't written can be unfair -- I've tuned my code to do well in my
-benchmark while I haven't gone through similar analysis and tuning for
-other database libraries.
+Initially sqlite-simple scored barely over 53K rows/s.  Optimizations
+brought this up to 1.8M rows/s, a nice 34x improvement.
 
-Thanks to [Emmanuel Surleau](https://github.com/Emm), [Irene
-Knapp](https://github.com/IreneKnapp) and [Joey
-Adams](https://github.com/joeyadams) for their optimization ideas,
-contributions and code reviews.
+## Setup
 
-## Establishing performance targets
+Here's the setup I used for running my experiments:
 
-My benchmarking goal was to figure out how much overhead does the
-sqlite-simple library add on top of raw SQLite performance.  Ideally,
-a query should spend all its time in native SQLite and zero time in
-Haskell bindings.
-
-To better focus optimization work, I first set out to establish some
-reasonable performance targets to compare against
-
-Establishing targets was straightforward.  As sqlite-simple runs on
-top of direct-sqlite, the sqlite-simple can only be as fast as
-direct-sqlite.  As direct-sqlite runs on top of the native SQLite
-library, the fastest sqlite-simple and direct-sqlite can possibly go
-is as fast as SQLite.
-
-To turn this into numbers, I implemented multiple versions of my query
-benchmark (in order of fastest to slowest):
-
-* A native C benchmark on top of the SQLite library ([source](https://github.com/nurpax/db-bench/tree/master/native/main.c))
-* Haskell: A Haskell version using direct-sqlite ([source](https://github.com/nurpax/db-bench/tree/master/haskell/Sqlite.hs), see function `selectInts`)
-* A Haskell version using sqlite-simple ([source](https://github.com/nurpax/db-bench/tree/master/haskell/Sqlite.hs), see function `selectIntsDS`)
-
-Here's how they perform:
-
-<div>
-#### Native C vs Haskell bindings (rows/s)
-<div id="chart-c-vs-haskell" style="width:600px;height:360px;"></div>
-</div>
-
-Initially sqlite-simple scored barely over 53K rows/s.  After all a
-bunch of optimizations the same figure was 1.8M/s, a nice 34x
-improvement.
+* 64-bit Debian running inside VirtualBox (with only a single core enabled)
+* Quad-core Intel Core i7 at 3.2GHz
+* GHC 7.4.2 from the Haskell Platform
+* MySQL 5.5.28, PostgreSQL 9.1.7
+* Package versions:
+    * [direct-sqlite-2.3.3](http://hackage.haskell.org/package/direct-sqlite-2.3.3.1)
+    * [sqlite-simple-0.3.0.0](http://hackage.haskell.org/package/sqlite-simple-0.3.0.0)
+    * [mysql-simple-0.2.2.4](http://hackage.haskell.org/package/mysql-simple-0.2.2.4)
+    * [mysql-0.1.1.4](http://hackage.haskell.org/package/mysql-0.1.1.4)
+    * [postgresql-simple-0.2.4.1](http://hackage.haskell.org/package/postgresql-simple-0.2.4.1)
+    * [postgresql-libpq-0.8.2.1](http://hackage.haskell.org/package/postgresql-libpq-0.8.2.1)
 
 ## What was benchmarked
 
@@ -86,14 +61,8 @@ selectInts conn = do
 ~~~~~
 
 Basically, it SELECTs all the rows from the `testdata` table and
-converts the result into a a Haskell list of `Int`s.  The resulting
-integers are added together as a simple sanity check to see that we
-got the right data back.  A faster variant of the same is
-`selectIntsFold` which uses `Database.SQLite.Simple.fold` to direcctly
-fold over the result rows rather than returning a list of all the
-result rows.  Speed advantage is mainly due to less memory being
-allocated -- internally both `fold` and `query_` use same data
-conversion paths.
+converts the result into a Haskell list of `Int`s and, as a sanity
+check, sums the resulting integers together.
 
 Several variants of this function are benchmarked.  The main variants for SQLite are:
 
@@ -113,50 +82,57 @@ and
 respectively.
 
 
-## Setup
+## Establishing performance targets
 
-* Debian (64-bit) running inside VirtualBox (with only a single core enabled)
-* Quad-core Intel Core i7 at 3.2GHz
-* GHC 7.4.2 from the Haskell Platform
-* MySQL 5.5.28, PostgreSQL 9.1.7
-* Package versions:
-    * [direct-sqlite-2.3.3](http://hackage.haskell.org/package/direct-sqlite-2.3.3.1)
-    * [sqlite-simple-0.3.0.0](http://hackage.haskell.org/package/sqlite-simple-0.3.0.0)
-    * [mysql-simple-0.2.2.4](http://hackage.haskell.org/package/mysql-simple-0.2.2.4)
-    * [mysql-0.1.1.4](http://hackage.haskell.org/package/mysql-0.1.1.4)
-    * [postgresql-simple-0.2.4.1](http://hackage.haskell.org/package/postgresql-simple-0.2.4.1)
-    * [postgresql-libpq-0.8.2.1](http://hackage.haskell.org/package/postgresql-libpq-0.8.2.1)
+My benchmarking goal was to figure out how much overhead does the
+sqlite-simple library add on top of raw SQLite performance.  Ideally,
+a query should spend all its time in native SQLite and zero time in
+Haskell bindings.
+
+To better focus optimization work, I first set out to establish some
+reasonable performance targets to compare against.  Establishing
+targets was straightforward.  As sqlite-simple runs on top of
+[direct-sqlite], the sqlite-simple can only be as fast as direct-sqlite.
+As direct-sqlite runs on top of the native SQLite library, the fastest
+sqlite-simple and direct-sqlite can possibly go is as fast as SQLite.
+
+To turn this into numbers, I implemented multiple versions of my query
+benchmark (in order of fastest to slowest):
+
+* A native C benchmark on top of the SQLite library ([source](https://github.com/nurpax/db-bench/tree/master/native/main.c))
+* Haskell: A Haskell version using direct-sqlite ([source](https://github.com/nurpax/db-bench/tree/master/haskell/Sqlite.hs), see function `selectInts`)
+* A Haskell version using sqlite-simple ([source](https://github.com/nurpax/db-bench/tree/master/haskell/Sqlite.hs), see function `selectIntsDS`)
+
+Here's how they perform:
+
+<div>
+#### Native C vs Haskell bindings (rows/s)
+<div id="chart-c-vs-haskell" style="width:600px;height:360px;"></div>
+</div>
 
 
-## Result analysis
+## Results analysis
 
 The collected benchmark data was used to identify various performance
 improvement opportunities in sqlite-simple.
 
-Here's a graph of sqlite-simple performance progression through
-various optimizations:
+Original performance without optimizations was a just barely over 50K
+rows/s.  This was a performance bug I caused when I forked
+sqlite-simple from postgresql-simple.  The problem was in a function
+called `stepStmt` that should've been tail recursive but wasn't.
+Fixing this in [d2b6f6a5][opt-tail-call] nicely bumped up the score
+from 53K to 750K rows/s.
 
-<div>
-#### Optimization progress (rows/s)
-<div id="chart-opt-progress" style="width:600px;height:360px;"></div>
-</div>
-
-The first result was as low as 53K rows/s.  This was a performance bug
-I caused when I forked sqlite-simple from postgresql-simple.  The
-problem was in a function called `stepStmt` that should've been tail
-recursive but wasn't.  Fixing this in [d2b6f6a5][opt-tail-call] nicely
-bumped up the score from 53K to 750K rows/s.
-
-The next couple of optimizations dealt mostly with clean up that lead
-to reduced allocation.  With [3239d474f0][dofold] and
+The next couple of optimizations dealt mostly with clean up to reduce
+allocation rate.  With [3239d474f0][dofold] and
 [0ee050807d][columnlength], the benchmark score went up from 750K to
-764K rows/sec.
+764K rows/s.
 
 At this point I ran out of low hanging fruit in sqlite-simple and
-started to look elsewhere for optimization opportunities.  A low-level
+started to look elsewhere for optimizations.  A low-level
 direct-sqlite benchmark was clocking around 2.43M rows/s which seemed
-a little when a C implementation of the same was processing rows at
-almost 6.9M rows/s.  Even a Python reimplementation of my benchmark
+a little low when a C implementation of the same was processing rows
+at almost 6.9M rows/s.  Even a Python reimplementation of my benchmark
 case was faster at 2.5M rows/s.  To highlight how large the
 performance delta between C and direct-sqlite were, it's helpful to
 turn the comparison into absolute clock cycles.  On my 3.2GHz machine,
@@ -209,14 +185,23 @@ accessors like `sqlite3_column_int64` and `sqlite3_column_count` as
 like `sqlite3_step` should be kept safe.
 
 The FFI optimizations were a big deal: the direct-sqlite benchmark
-score went up from 2.43M to 3.6M rows/s.  As expected, this in turn
-bumped up the sqlite-simple score up by roughly 1M rows/s.
+score went up from 2.43M to 3.6M rows/s.  As expected, this bumped up
+the sqlite-simple score up to 1.8M rows/s.
+
+The following chart summarizes how performance progressed through the
+above optimizations:
+
+<div>
+#### Optimization progress (rows/s)
+<div id="chart-opt-progress" style="width:600px;height:360px;"></div>
+</div>
+
 
 ## Comparing to other implementations and databases
 
-I thought it'd be interesting to compare my results to other databases
-and also to other Haskell database bindings.  Furthermore, I wanted to
-know how well Python fares with its built-in sqlite3 module.  So I
+As an extra bonus, I also compared my results to other databases and
+to other Haskell database bindings.  Furthermore, I wanted to know how
+well Python fares with its built-in sqlite3 module.  I thus
 implemented a few more variants of my benchmark:
 
 * mysql-simple ([source](https://github.com/nurpax/db-bench/tree/master/haskell/Mysql.hs))
@@ -233,20 +218,26 @@ I didn't do any performance analysis for non-sqlite benchmark results,
 and wouldn't draw too many conclusions about the results.  These
 results do seem to confirm though that the HDBC library adds a fairly
 significant overhead to database row access.  Comparing HDBC against
-sqlite-simple, we get 105K vs 1.8M rows/sec.
+sqlite-simple, we get 105K vs 1.8M rows/s.
 
 ## Next steps
 
-There are still a few ways on how this benchmark could be improved:
+There are still many areas that would benefit from further
+benchmarking:
 
-1. Benchmark with more columns in the results
-2. Benchmark type conversion speed of different column types
-3. Benchmark per-query overhead
+* Use more columns in result sets
+* Use other column types than Int's
+* Per-query overhead
 
 I expect especially per-query overhead to be an important metric for
 web applications.  The typical usage in web apps would be that a
 single page load performs several queries with relatively low number
 of rows returned by each query.
+
+Thanks to [Emmanuel Surleau](https://github.com/Emm), [Irene
+Knapp](https://github.com/IreneKnapp) and [Joey
+Adams](https://github.com/joeyadams) for their optimization ideas,
+contributions and code reviews.
 
 Until next time.
 
@@ -294,14 +285,15 @@ $(function () {
      var dataNativeVsHaskell = [
            [6891798, "Native C"],
            [3600395, "direct-sqlite"],
-           [1808292, "sqlite-simple"]
+           [1808292, "sqlite-simple (optimized)"],
+           [53106,   "sqlite-simple (unoptimized)"]
          ]
 
      var dataProgression = [
-         [53106, "Original"],
+         [53106, "Original (w/o optimizations)"],
          [749883, "Tail call optimization"],
          [889363, "Cleanup, strictness, less allocs"],
-         [1808292, "Unsafe flag"]
+         [1808292, "With full optimizations (incl. unsafe FFI)"]
          ]
 
      barchart("#chart-cross-db", "ne", data);
