@@ -1,8 +1,8 @@
 ---
 title: Benchmarking sqlite-simple
 author: Janne Hellsten
-date: August 13, 2013
-public: false
+date: August 17, 2013
+public: true
 ---
 
 ## Introduction
