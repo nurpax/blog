@@ -1,7 +1,7 @@
 name:                blog
 version:             0.1.0.0
-synopsis:            Haskell database performance suite
-homepage:            http://nurpax.github.com/db-bench
+synopsis:            nurpax.github.io blog
+homepage:            http://nurpax.github.com/blog
 license:             AllRightsReserved
 author:              Janne Hellsten
 maintainer:          jjhellst@gmail.com
@@ -11,5 +11,5 @@ cabal-version:       >=1.8
 executable blog
   hs-source-dirs:    .
   main-is:           hakyll.hs
-  build-depends:     base == 4.5.*
+  build-depends:     base >= 4.5 && < 5
                    , hakyll >= 4.2.0.0
