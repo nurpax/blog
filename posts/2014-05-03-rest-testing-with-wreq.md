@@ -2,7 +2,7 @@
 title: REST API testing in Haskell with wreq and test-framework
 author: Janne Hellsten
 date: May 4, 2014
-public: false
+public: true
 ---
 
 ## Introduction
