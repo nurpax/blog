@@ -195,7 +195,7 @@ testAddExercise opts = do
   r <- getWith opts (mkUrl "/rest/exercise")
   assertBool "oid should be in list" (oid `elem` exercises r)
   where
-    exercises r = r ^. responseBody ^.. values . key "id" . _Integer
+    exercises r = r ^.. responseBody . values . key "id" . _Integer
 ```
 
 ## Conclusion
