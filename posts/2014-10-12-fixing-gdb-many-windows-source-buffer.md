@@ -16,8 +16,8 @@ The problem occurs when stepping through a program in `gud-mode` with
 buffers into the dedicated middle-left source window.  Instead, source
 buffers are (randomly?) assigned on top of other GDB buffers like the
 GDB comint window.  The layout problem gets even worse with multiple
-Emacs frames.  Here are my reproduction instructions with a diagram of
-what happens and how I'd like Emacs to behave instead.
+Emacs frames.  Here are my repro steps with a diagram of what happens
+and how I'd like Emacs to behave instead.
 
 ## Steps to reproduce the problem
 
