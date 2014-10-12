@@ -78,7 +78,7 @@ The window layout should now look something like this (the source window with `m
   </g>
   <g transform="translate(300 133)">
     <rect width="50%" height="33%" style="fill:rgb(0,43,53); stroke-width:2; stroke:rgb(0,0,0)" />
-    <text x="5%" y="18%" font-family="Helvetica" font-size="20" fill="rgb(131,148,150)">&#42;locals of test&#42;</text>
+    <text x="5%" y="18%" font-family="Helvetica" font-size="20" fill="rgb(131,148,150)">&#42;input/output of test&#42;</text>
   </g>
 <!-- stack frame, breakpoints -->
   <g transform="translate(0 266)">
@@ -131,7 +131,7 @@ The window layout now looks like this:
   </g>
   <g transform="translate(300 133)">
     <rect width="50%" height="33%" style="fill:rgb(0,43,53); stroke-width:2; stroke:rgb(0,0,0)" />
-    <text x="5%" y="18%" font-family="Helvetica" font-size="20" fill="rgb(131,148,150)">&#42;locals of test&#42;</text>
+    <text x="5%" y="18%" font-family="Helvetica" font-size="20" fill="rgb(131,148,150)">&#42;input/output of test&#42;</text>
   </g>
 <!-- stack frame, breakpoints -->
   <g transform="translate(0 266)">
