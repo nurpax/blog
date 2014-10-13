@@ -19,9 +19,7 @@ GDB comint window.  The layout problem gets even worse with multiple
 Emacs frames.  Here are my repro steps with a diagram of what happens
 and how I'd like Emacs to behave instead.
 
-## Steps to reproduce the problem
-
-I'm running Emacs 24.3.1.
+Here are the steps to reproduce the problem on Emacs 24.3.1.
 
 Bind `gud-next` and `gud-step` to `[f7]` and `[f8]`:
 
