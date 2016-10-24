@@ -3,6 +3,7 @@ module Main where
 
 import           Control.Monad (filterM)
 import           Data.Monoid   (mappend, mconcat)
+import qualified GHC.IO.Encoding as E
 
 import           Hakyll
 import           Hakyll.Core.Metadata
@@ -31,7 +32,9 @@ publicOnly i = i >>= \lst -> filterM isPublic lst
       return $ f == Just "true"
 
 main :: IO ()
-main = hakyllWith config $ do
+main = do
+    E.setLocaleEncoding E.utf8
+    hakyllWith config $ do
     -- Compress CSS
     match "css/*" $ do
         route   idRoute

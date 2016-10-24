@@ -10,6 +10,6 @@ cabal-version:       >=1.8
 
 executable blog
   hs-source-dirs:    .
-  main-is:           hakyll.hs
+  main-is:           site.hs
   build-depends:     base >= 4.5 && < 5
                    , hakyll >= 4.2.0.0
