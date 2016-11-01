@@ -5,3 +5,5 @@ dist/
 TAGS
 /.cabal-sandbox/
 /cabal.sandbox.config
+/.stack-work/
+/nurpax.github.com/
