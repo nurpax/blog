@@ -29,7 +29,7 @@ Here are some thoughts on what could still be improved:
 
 * RN stylesheet documentation recommends using `StyleSheet.create()` instead of inline styles.  I'm now using inline styles everywhere.  There may be a performance benefit to using `StyleSheet.create()`.  In my case though, each individual star needs its own stylesheet as a star's absolute position must be set using a stylesheet.
 
-Thoughts?  Questions?  Let's discuss on [Reddit](https://reddit.com/TODO).
+Thoughts?  Questions?  Let's discuss on [Reddit](https://www.reddit.com/r/reactjs/comments/83yrad/60_fps_3d_starfield_in_react_native/).
 
 [bintris]: http://nurpax.com/bintris
 [css3stars]: https://codepen.io/keithclark/pen/ibEnk
