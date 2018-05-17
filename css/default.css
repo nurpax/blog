@@ -5,12 +5,13 @@ body {
     line-height: 1.5;
     color: #333;
     background: #dcdcda;
-    padding: 0.5em;
+    margin:0px;
 }
 
 pre, code {
   font-size:12px;
   margin-top:0px;
+  overflow:scroll;
 }
 
 a:link, a:visited, a:active {  text-decoration:none;  color:#579;}
@@ -25,12 +26,31 @@ ul, menu, dir {
 }
 
 p {
-    margin: 1em 0px;
+  margin-left: 0px;
+  margin-right: 0px;
+  margin-top: 0.2em;
+  margin-bottom: 0.7em;
+}
+
+p.post-author {
+  color:#777;
+  margin-top: 0px;
+  margin-left: 0.2em;
+  font-family: "Lucida Grande","Lucida Sans Unicode","Lucida Sans",Geneva,Arial,sans-serif!important;
+  font-size: 0.8em;
+}
+
+p.contact-details {
+  color:#666;
+  margin-top: 0px;
+  margin-left: 0.1em;
+  font-family: "Lucida Grande","Lucida Sans Unicode","Lucida Sans",Geneva,Arial,sans-serif!important;
+  font-size: 0.8em;
 }
 
 h1 {
   display: block;
-  font-size: 1.6em;
+  font-size: 1.2em;
   -webkit-margin-before: 0.67em;
   -webkit-margin-after: 0.67em;
   -webkit-margin-start: 0px;
@@ -38,14 +58,24 @@ h1 {
 }
 
 h1, h2, h3, h4, h5 {
-    font-family:'Lucida Grande', Helvetica, Arial, sans-serif;
-    text-decoration:none;
-    color:#444;
-    font-weight: bold;
+  font-family:'Lucida Grande', Helvetica, Arial, sans-serif;
+  text-decoration:none;
+  color:#444;
+  font-weight: bold;
+  margin-bottom:0px;
+  margin-top:0px;
+}
+
+h2 {
+  font-size: 1.1em;
+}
+
+h3 {
+  font-size: 1.0em;
 }
 
 table th,td {
-    border: 1px solid #bbb;
+  border: 1px solid #bbb;
 }
 
 #page-wrap {
@@ -56,11 +86,21 @@ table th,td {
     border: 1px solid #bbb;
 }
 
+@media only screen and (max-width: 768px) {
+#page-wrap {
+    width: 100%;
+    margin: 0em auto;
+    padding: 0em;
+    background:#fff;
+}
+}
+
 #header {
-  padding-top: 3px;
+  width:100%;
+  padding-top: 13px;
   padding-left: 0px;
   padding-right: 0px;
-  padding-bottom: 3px;
+  padding-bottom: 13px;
   background-image: url(/images/bloghead2.jpg);
   background-repeat: no-repeat;
   border: 0px solid #000;
@@ -88,7 +128,7 @@ div#navigation a {
     color: white;
     text-decoration: none;
     padding: 4px;
-    margin-left: 10px;
+    margin-left: 15px;
     margin-right: 10px;
     font-weight: bold;
     letter-spacing:0.15em;
@@ -130,4 +170,20 @@ div.white-bg img {
 .fb-like {
     position:relative;
     top:-7px;
+}
+
+/* youtube auto width/height */
+.youtube {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%;
+}
+
+.video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }

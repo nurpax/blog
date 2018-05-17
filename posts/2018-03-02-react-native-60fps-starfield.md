@@ -11,7 +11,9 @@ One of the game's main visual ingredients is the real-time 3D starfield backgrou
 
 The web Bintris uses a pure-CSS starfield effect that I borrowed from [here][css3stars].  Here's how my RN re-implementation looks like:
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/thBijc6x7e0?rel=0&amp;showinfo=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+<div class="youtube">
+<iframe class="video" src="https://www.youtube.com/embed/thBijc6x7e0?rel=0&amp;showinfo=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+</div>
 
 Both the CSS and RN versions use a trick to project the starfield random 3d-points onto a fixed number of xy-planes.  This makes it quite a bit faster to animate and render than animating each 3D point separately.  In the above video, the starfield consists of ten Animated.Views each containing 150 random stars.  Each star is an absolutely positioned view with a white background color.
 
