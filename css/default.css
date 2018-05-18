@@ -147,6 +147,21 @@ div#navigation a:hover {
     margin-right: 1em;
 }
 
+#footer {
+    margin-top: 1em;
+    margin-bottom: 1em;
+
+    margin-left: 1em;
+    margin-right: 1em;
+    border-top: 1px solid #ddd;
+    padding-top: 1em;
+    padding-bottom: 2em;
+
+    font-family: "Lucida Grande","Lucida Sans Unicode","Lucida Sans",Geneva,Arial,sans-serif!important;
+    font-size: 0.8em;
+    color: #666;
+}
+
 
 div.screenshot {
     text-align:center;
