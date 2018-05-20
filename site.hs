@@ -49,14 +49,15 @@ main = do
         route   idRoute
         compile copyFileCompiler
 
-    match "includes/*" $ compile getResourceBody
+--    match "includes/*" $ compile getResourceBody
 
     -- Render posts
     match "posts/*" $ do
         route   $ setExtension ".html"
-        compile $ getResourceBody
-            >>= applyAsTemplate postCtx
-            >>= renderPandoc
+        compile $ pandocCompiler
+--        compile $ getResourceBody
+--            >>= applyAsTemplate postCtx
+--            >>= renderPandoc
             >>= saveSnapshot "content"
             >>= return . fmap demoteHeaders
             >>= loadAndApplyTemplate "templates/post.html" postCtx

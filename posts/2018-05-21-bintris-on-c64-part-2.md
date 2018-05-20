@@ -1,0 +1,34 @@
+---
+title: BINTRIS on the C64 is released!
+author: Janne Hellsten
+date: May 21, 2018
+public: true
+---
+
+The Commodore 64 version of [BINTRIS][bintris] has been released!  Find your bintris.d64 copy at:
+[http://csdb.dk/release/index.php?id=164874](http://csdb.dk/release/index.php?id=164874).
+
+Here's a quick VICE video cap (real hardware capture is coming online very soon):
+
+<div class="youtube">
+<iframe class="video" src="https://www.youtube.com/embed/XRdg8u9umHo?rel=0&amp;controls=1&amp;showinfo=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></div>
+
+Here's the game objective in a nutshell:
+
+<div class="screenshot white-bg">
+![](/images/bintris_how_to_play2.png "BINTRIS HOWTO PLAY")
+</div>
+
+Next in series
+--------------
+
+The next post will discuss how the title screen mixes multicolor bitmap mode (the BINTRIS image) and text mode (the scroller).
+
+All posts in this series:
+
+<ul>
+  <li><a href="2018-05-19-bintris-on-c64-part-1.html">BINTRIS on C64, part 1</a></li>
+  <li><a href="2018-05-21-bintris-on-c64-part-2.html">BINTRIS ships!, part 2</a></li>
+</ul>
+
+[bintris]: http://nurpax.com/bintris
