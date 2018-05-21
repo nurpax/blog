@@ -9,8 +9,12 @@ public: true
 ![](/images/bintris_titlescreen.png "BINTRIS")
 </div>
 
-The Commodore 64 version of [BINTRIS][bintris] has been released!  Find your bintris.d64 copy at:
-[http://csdb.dk/release/index.php?id=164874](http://csdb.dk/release/index.php?id=164874).
+The Commodore 64 version of [BINTRIS][bintris] has been released!
+
+[Download the latest BINTRIS disk image](/files/bintris-2018-05-22.d64)
+
+(Originally [released on CSDb](http://csdb.dk/release/index.php?id=164874) but further updates will be posted here on the blog.)
+.
 
 Here's a quick VICE video cap (real hardware capture is coming online very soon):
 
