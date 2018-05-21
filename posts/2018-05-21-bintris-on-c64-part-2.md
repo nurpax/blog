@@ -1,9 +1,13 @@
 ---
-title: BINTRIS on the C64 is released!
+title: BINTRIS on the C64 has been released!
 author: Janne Hellsten
 date: May 21, 2018
 public: true
 ---
+
+<div class="screenshotMax">
+![](/images/bintris_titlescreen.png "BINTRIS")
+</div>
 
 The Commodore 64 version of [BINTRIS][bintris] has been released!  Find your bintris.d64 copy at:
 [http://csdb.dk/release/index.php?id=164874](http://csdb.dk/release/index.php?id=164874).
@@ -15,7 +19,7 @@ Here's a quick VICE video cap (real hardware capture is coming online very soon)
 
 Here's the game objective in a nutshell:
 
-<div class="screenshot white-bg">
+<div class="screenshotMax">
 ![](/images/bintris_how_to_play2.png "BINTRIS HOWTO PLAY")
 </div>
 

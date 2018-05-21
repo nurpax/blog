@@ -165,12 +165,16 @@ div#navigation a:hover {
 
 div.screenshot {
     text-align:center;
-
 }
 
 /* for screenshots with whitebackground, add a very dim border */
 div.white-bg img {
   border: 1px dashed #ccc;
+}
+
+div.figure img {
+  max-width: 100%;
+  height: auto;
 }
 
 .social {
