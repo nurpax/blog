@@ -11,10 +11,9 @@ public: true
 
 The Commodore 64 version of [BINTRIS][bintris] has been released!
 
-[Download the latest BINTRIS disk image](/files/bintris-2018-05-22.d64)
+Download the latest BINTRIS disk image: [bintris-2018-05-22.d64](/files/bintris-2018-05-22.d64)
 
 (Originally [released on CSDb](http://csdb.dk/release/index.php?id=164874) but further updates will be posted here on the blog.)
-.
 
 Here's a quick VICE video cap (real hardware capture is coming online very soon):
 
