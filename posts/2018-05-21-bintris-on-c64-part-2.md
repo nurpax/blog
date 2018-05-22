@@ -3,6 +3,7 @@ title: BINTRIS on the C64 has been released!
 author: Janne Hellsten
 date: May 21, 2018
 public: true
+series: bintris-c64
 ---
 
 <div class="screenshotMax">
@@ -30,12 +31,5 @@ Next in series
 --------------
 
 The next post will discuss how the title screen mixes multicolor bitmap mode (the BINTRIS image) and text mode (the scroller).
-
-All posts in this series:
-
-<ul>
-  <li><a href="2018-05-19-bintris-on-c64-part-1.html">BINTRIS on C64, part 1</a></li>
-  <li><a href="2018-05-21-bintris-on-c64-part-2.html">BINTRIS ships!, part 2</a></li>
-</ul>
 
 [bintris]: http://nurpax.com/bintris

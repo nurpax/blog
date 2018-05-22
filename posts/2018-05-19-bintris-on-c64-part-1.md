@@ -3,6 +3,7 @@ title: BINTRIS on the C64, part 1
 author: Janne Hellsten
 date: May 18, 2018
 public: true
+series: bintris-c64
 ---
 
 Introduction
@@ -77,13 +78,6 @@ Next in series
 --------------
 
 The next blog in the series will showcase the game itself, hopefully with final version captured on real hardware.
-
-All posts in this series:
-
-<ul>
-  <li><a href="2018-05-19-bintris-on-c64-part-1.html">BINTRIS on C64, part 1</a></li>
-  <li><a href="2018-05-21-bintris-on-c64-part-2.html">BINTRIS ships!, part 2</a></li>
-</ul>
 
 <!--$snippet("includes/bintris-c64-series.html")$-->
 

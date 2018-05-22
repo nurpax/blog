@@ -2,17 +2,27 @@
 module Main where
 
 import           Control.Monad (filterM)
-import           Data.Monoid   (mappend, mconcat)
+import           Data.Monoid   ((<>), mconcat)
 import qualified GHC.IO.Encoding as E
 
 import           Hakyll
 import           Hakyll.Core.Metadata
 
+seriesLinks :: Context String
+seriesLinks =
+  functionField "seriesLinks" $ \args item -> do
+    seriesTag <- getMetadataField (itemIdentifier item) "series"
+    case seriesTag of
+      Just tag -> do
+        let fname = fromFilePath ("templates/series-" <> tag <> ".html")
+        itemBody <$> loadAndApplyTemplate fname defaultContext item
+      Nothing -> return ""
+
 postCtx :: Context String
 postCtx = mconcat
     [ modificationTimeField "mtime" "%U"
     , dateField "date" "%B %e, %Y"
-    , snippetField
+    , seriesLinks
     , defaultContext
     ]
 
@@ -53,15 +63,10 @@ main = do
         route   idRoute
         compile copyFileCompiler
 
---    match "includes/*" $ compile getResourceBody
-
     -- Render posts
     match "posts/*" $ do
         route   $ setExtension ".html"
         compile $ pandocCompiler
---        compile $ getResourceBody
---            >>= applyAsTemplate postCtx
---            >>= renderPandoc
             >>= saveSnapshot "content"
             >>= return . fmap demoteHeaders
             >>= loadAndApplyTemplate "templates/post.html" postCtx
@@ -75,9 +80,9 @@ main = do
             list <- postList "posts/*" (publicOnly . recentFirst)
             makeItem ""
               >>= loadAndApplyTemplate "templates/posts.html"
-                    (constField "posts" list `mappend` defaultContext)
+                    (constField "posts" list <> defaultContext)
               >>= loadAndApplyTemplate "templates/default.html"
-                    (constField "title" "All posts" `mappend` defaultContext)
+                    (constField "title" "All posts" <> defaultContext)
               >>= relativizeUrls
 
     -- Index
@@ -85,8 +90,8 @@ main = do
         route idRoute
         compile $ do
             list <- postList "posts/*" (fmap (take 10) . publicOnly . recentFirst)
-            let ctx = constField "posts" list `mappend`
-                      constField "title" "Home" `mappend`
+            let ctx = constField "posts" list <>
+                      constField "title" "Home" <>
                       defaultContext
 
             makeItem list
