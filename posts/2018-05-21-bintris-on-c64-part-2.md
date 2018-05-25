@@ -1,5 +1,5 @@
 ---
-title: BINTRIS on the C64 has been released!
+title: BINTRIS on the C64 has been released! (series part 2)
 author: Janne Hellsten
 date: May 21, 2018
 public: true

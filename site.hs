@@ -55,6 +55,10 @@ main = do
         route   idRoute
         compile copyFileCompiler
 
+    match "images/bintris/*" $ do
+        route   idRoute
+        compile copyFileCompiler
+
     match "js/*" $ do
         route   idRoute
         compile copyFileCompiler

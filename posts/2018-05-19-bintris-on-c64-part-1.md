@@ -1,5 +1,5 @@
 ---
-title: BINTRIS on the C64, part 1
+title: BINTRIS on the C64 (series part 1)
 author: Janne Hellsten
 date: May 18, 2018
 public: true
