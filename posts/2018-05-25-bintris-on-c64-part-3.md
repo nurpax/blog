@@ -16,12 +16,15 @@ The title screen consists of a multicolor bitmap at the top and a text mode scro
 
 The scroller is a pretty standard text mode scroller: use the horizontal scroll register `$d016` for 0-7 pixel shifting, when you reach pixel offset 7, reset to pixel offset 0 and move the whole character row left.
 
-![](/images/bintris/titlescreen_for_blog.png "BINTRIS title")
+This type of a text mode scroller is easy to implement and plenty fast.
 
+Here comes the trick though: the upper part of the screen is in multicolor bitmap mode.  How can we use a text mode scroller at the bottom?  Easy!  Just switch to text-mode right before the scroller, and switch back to bitmap mode once the raster beam is past the text scroller.
+
+$bintris_title_svg$
 
 Next in series
 --------------
 
-The next post will discuss how the title screen mixes multicolor bitmap mode (the BINTRIS image) and text mode (the scroller).
+Next topic TBD.
 
 [bintris]: http://nurpax.com/bintris

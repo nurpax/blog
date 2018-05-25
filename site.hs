@@ -1,12 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
+import           Control.Applicative ((<|>))
 import           Control.Monad (filterM)
 import           Data.Monoid   ((<>), mconcat)
 import qualified GHC.IO.Encoding as E
 
 import           Hakyll
 import           Hakyll.Core.Metadata
+import           Text.Pandoc (Pandoc, Block, Inline(..), MathType(..))
+import           Text.Pandoc.Walk (walk)
+
+import qualified Diagrams.Bintris as Bintris
 
 seriesLinks :: Context String
 seriesLinks =
@@ -42,6 +47,21 @@ publicOnly i = i >>= \lst -> filterM isPublic lst
       f <- getMetadataField (itemIdentifier i) "public"
       return $ f == Just "true"
 
+-- | Read a page render using pandoc and apply some substitutions like
+-- inserting SVG for diagrams
+pandocCompilerXform :: (Pandoc -> Pandoc) -> Compiler (Item String)
+pandocCompilerXform f =
+    pandocCompilerWithTransform defaultHakyllReaderOptions defaultHakyllWriterOptions f
+
+substDiagrams :: Pandoc -> Pandoc
+substDiagrams doc = walk bintrisSvg doc
+  where
+    bintrisSvg :: Inline -> Inline
+    bintrisSvg e@(Math InlineMath name) =
+      foldr (\(n, svg) acc -> if name == n then rawHtml svg else acc) e Bintris.diagrams
+    bintrisSvg e = e
+    rawHtml html = RawInline "html" html
+
 main :: IO ()
 main = do
     E.setLocaleEncoding E.utf8
@@ -70,7 +90,7 @@ main = do
     -- Render posts
     match "posts/*" $ do
         route   $ setExtension ".html"
-        compile $ pandocCompiler
+        compile $ pandocCompilerXform substDiagrams
             >>= saveSnapshot "content"
             >>= return . fmap demoteHeaders
             >>= loadAndApplyTemplate "templates/post.html" postCtx

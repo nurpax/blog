@@ -11,6 +11,11 @@ cabal-version:       >=1.8
 executable blog
   hs-source-dirs:    .
   main-is:           site.hs
+  other-modules:     Diagrams.Bintris
   build-depends:     base >= 4.5 && < 5
                    , hakyll >= 4.2.0.0
+                   , blaze-svg >= 0.3.6
+                   , text
+                   , pandoc
+                   , pandoc-types
   ghc-options:      -threaded
