@@ -14,7 +14,7 @@ executable blog
   other-modules:     Diagrams.Bintris
   build-depends:     base >= 4.5 && < 5
                    , hakyll >= 4.2.0.0
-                   , blaze-svg >= 0.3.6
+                   , blaze-svg >= 0.3.6.1
                    , text
                    , pandoc
                    , pandoc-types
