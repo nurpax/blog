@@ -28,11 +28,13 @@ ax (v :: Float) = A.x (toValue v)
 
 ay (v :: Float) = A.y (toValue v)
 
-colorTitle :: Float -> Float -> T.Text -> S.AttributeValue -> S.Svg
-colorTitle x y text f =
-  S.g $ do
-    S.rect ! awidth 15 ! aheight 15 ! ax x ! ay y ! A.fill f
+colorTitle :: Float -> Float -> T.Text -> S.AttributeValue -> S.AttributeValue -> S.Svg
+colorTitle x y text f animId =
+  S.g ! A.id_ "title" $ do
+    let bw = 3
+    S.rect ! awidth 14 ! aheight 14 ! ax x ! ay (y-1) ! A.fill f
     S.text_ ! ax (x+19) ! ay (y+12) ! A.fill "white" $ (S.text text)
+    S.rect ! awidth 130 ! aheight (17+bw*2) ! ax (x-bw) ! ay (y-bw-2) ! A.fill "#fff" ! A.id_ animId
 
 -- C64 screen position in pixels within the .png
 bmLeft   = 58
@@ -68,6 +70,7 @@ animCss =
          , makeHighlightAnim "hilite1" startLine
          , makeHighlightAnim "hilite2" modeswitchLine
          , makeHighlightAnim "hilite3" colorLine
+         , "#title { font-family: \"arial\";}"
          ]
   where
     pixYPerc y = (y - beamStartLine) / (transYLines - beamStartLine) * 100.0
@@ -86,10 +89,11 @@ animCss =
               , "  transform-box: fill-box;"
               , "}"
               , "@keyframes " <> id_ <> " {"
-              , "  0% { transform:scale(1,1); }"
-              , "  " <> yp0 <> "% { transform:scale(1,1); }"
-              , "  " <> yp1 <> "% { transform:scale(1.5,1.5); }"
-              , "  " <> yp2 <> "% { transform:scale(1,1);}"
+              , "  0% { opacity:0; }"
+              , "  " <> yp0 <> "% { opacity:0; }"
+              , "  " <> yp1 <> "% { opacity:1; }"
+              , "  " <> yp2 <> "% { opacity:0; }"
+              , "  100% { opacity:0; }"
               , "}"
               ]
 
@@ -107,10 +111,10 @@ titlescreenRasterSvg =
       pixrect (-40) (-33) 400 1 ! A.id_ "rasterbeam" ! A.fill "#ffffff" ! A.opacity "0.7"
     S.g $ do
       let starty = 539 - 30
-      let tx = bmLeft + 95
-      colorTitle tx starty "top frame" startIrqFill ! A.id_ "hilite1"
-      colorTitle (tx+1*140) starty "mode switch" modeIrqFill ! A.id_ "hilite2"
-      colorTitle (tx+2*140) starty "color line" colorIrqFill ! A.id_ "hilite3"
+      let tx = bmLeft + 90
+      colorTitle tx starty "bitmap mode" startIrqFill "hilite1"
+      colorTitle (tx+1*150) starty "text mode" modeIrqFill "hilite2"
+      colorTitle (tx+2*150-15) starty "raster bar" colorIrqFill "hilite3"
   where
     startIrqFill = "#008d46"
     modeIrqFill  = "#cf4600"
