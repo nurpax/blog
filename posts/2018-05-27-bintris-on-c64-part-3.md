@@ -16,7 +16,7 @@ The title screen consists of a multicolor bitmap at the top and a text mode scro
 
 This is a pretty standard text mode scroller: use the horizontal scroll register `$d016` for 0-7 pixel shifting.  When you reach pixel offset 7, reset to pixel offset 0 and move the whole character row left by one character (8 pixels).  Additionally, the scroller text is colored with raster bars.
 
-But wait a minute..  The the screen is in multicolor bitmap mode.  How can we use a _text mode_ scroller at the bottom?  Fortunately it's pretty easy to mix bitmap and text mode within a single frame.  Just switch to text-mode right before raster beam reaches the scroller, and switch back to bitmap mode once the raster beam is past it.
+But wait a minute..  The screen is in multicolor bitmap mode.  How can we use a _text mode_ scroller at the bottom?  Fortunately it's pretty easy to mix bitmap and text mode within a single frame.  Just switch to text-mode right before raster beam reaches the scroller, and switch back to bitmap mode once the raster beam is past it.
 
 The below animation illustrates how the raster IRQs trigger:
 
