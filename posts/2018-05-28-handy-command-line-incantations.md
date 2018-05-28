@@ -1,5 +1,5 @@
 ---
-title: Handy command line incantations
+title: Handy command-line incantations
 author: Janne Hellsten
 public: true
 ---
