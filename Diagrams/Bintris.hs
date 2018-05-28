@@ -20,6 +20,8 @@ import qualified Text.Blaze.Svg11 as S
 import qualified Text.Blaze.Svg11.Attributes as A
 import Text.Blaze.Svg.Renderer.String (renderSvg)
 
+import Diagrams.BintrisGamescreen (gamescreen)
+
 awidth  (v :: Float) = A.width (toValue v)
 
 aheight (v :: Float) = A.height (toValue v)
@@ -130,6 +132,7 @@ titlescreenRaster = renderSvg titlescreenRasterSvg
 
 diagrams =
   [ ("bintris_title_svg", titlescreenRaster)
+  , ("bintris_gamescreen_svg", gamescreen)
   ]
 
 test :: IO ()
