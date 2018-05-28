@@ -1,23 +1,14 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
 
-module Diagrams.BintrisGamescreen (
+module Diagrams.Bintris.Gamescreen (
     gamescreen
   ) where
 
-import Data.Monoid ((<>))
 import qualified Data.Text as T
-import Text.Blaze.Svg11 ((!), toValue, toMarkup)
 import qualified Text.Blaze.Svg11 as S
 import qualified Text.Blaze.Svg11.Attributes as A
-import Text.Blaze.Svg.Renderer.String (renderSvg)
 
-awidth  (v :: Float) = A.width (toValue v)
-
-aheight (v :: Float) = A.height (toValue v)
-
-ax (v :: Float) = A.x (toValue v)
-
-ay (v :: Float) = A.y (toValue v)
+import Diagrams.Bintris.Util
 
 -- C64 screen position in pixels within the .png
 bmLeft   = 32
@@ -29,9 +20,6 @@ yh = bmBottom - bmTop
 -- Scale from 320x200 pixel resolution to svg image coordinates
 pixelY y = bmTop + y/200.0*yh
 pixelXY x y = (bmLeft + x/320.0*xw, pixelY y)
-
-showt :: (Show a) => a -> T.Text
-showt = T.pack . show
 
 pixrect :: Float -> Float -> Float -> Float -> S.Svg
 pixrect x y w h =
