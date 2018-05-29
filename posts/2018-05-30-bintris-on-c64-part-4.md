@@ -3,6 +3,7 @@ title: BINTRIS C64 game screen rendering (series part 4)
 author: Janne Hellsten
 public: true
 series: bintris-c64
+thumb: /images/bintris/gamescreen-social-thumb.png
 ---
 
 (Looking for the BINTRIS C64 disk image?  Find it [here](/posts/2018-05-21-bintris-on-c64-part-2.html).)
