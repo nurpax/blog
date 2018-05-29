@@ -12,8 +12,11 @@ executable blog
   hs-source-dirs:    .
   main-is:           site.hs
   other-modules:     Diagrams.Bintris
+                     Diagrams.Bintris.Gamescreen
+                     Diagrams.Bintris.Titlescreen
+                     Diagrams.Bintris.Util
   build-depends:     base >= 4.5 && < 5
-                   , hakyll >= 4.2.0.0
+                   , hakyll >= 4.12.2.0
                    , blaze-svg >= 0.3.6.1
                    , text
                    , pandoc

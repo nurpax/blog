@@ -2,7 +2,7 @@
 module Main where
 
 import           Control.Applicative ((<|>))
-import           Control.Monad (filterM)
+import           Control.Monad (filterM, void)
 import           Data.Monoid   ((<>), mconcat)
 import qualified GHC.IO.Encoding as E
 
@@ -62,10 +62,8 @@ substDiagrams doc = walk bintrisSvg doc
     bintrisSvg e = e
     rawHtml html = RawInline "html" html
 
-main :: IO ()
-main = do
-    E.setLocaleEncoding E.utf8
-    hakyllWith config $ do
+buildRules :: Rules ()
+buildRules = do
     -- Compress CSS
     match "css/*" $ do
         route   idRoute
@@ -133,6 +131,19 @@ main = do
 
     -- Read templates
     match "templates/*" $ compile templateCompiler
+
+
+main :: IO ()
+main = do
+    E.setLocaleEncoding E.utf8
+    hakyllWith config buildRules
+
+-- For starting with ghcid site.hs --test ghcidEntry
+-- forces site recompilation when the .hs source changes.
+ghcidEntry :: IO ()
+ghcidEntry = do
+    void $ hakyllWithExitCodeAndArgs config (Options False Clean) buildRules
+    void $ hakyllWithExitCodeAndArgs config (Options False (Watch "127.0.0.1" 8000 False)) buildRules
 
 postList :: Pattern -> ([Item String] -> Compiler [Item String])
          -> Compiler String
