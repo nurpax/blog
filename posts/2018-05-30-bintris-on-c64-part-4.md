@@ -31,6 +31,8 @@ Note that not all these sprites are always enabled: the noise animation sprites 
 
 Having said all of the above, I realize some of this might've been better implemented with just text rendering using a modified charset.  But sprites got the job done and I left it at that.
 
+I did skip over some details.  The biggest shortcut though is what goes on with the BINTRIS logo.
+
 
 ```
 .macro drawboard(screen, colorbuf, piececol) {
