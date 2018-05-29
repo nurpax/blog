@@ -27,6 +27,14 @@ Resize an image with point-sampling while NOT preserving aspect-ratio (ImageMagi
 convert input.png -sample 640x200! output.png
 ```
 
+Crop the input image and then make a .gif (`+repage` is required to actually crop the output image dimensions too):
+
+```
+# 104x30 is the size of the crop rectangle
+# +62+22 is an offset to the top/left corner of the crop area
+convert -crop 104x30+62+22 +repage -loop 0 -delay 300 image?.png result.gif
+```
+
 Video files
 -----------
 
