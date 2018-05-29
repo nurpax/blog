@@ -45,7 +45,7 @@ modeswitchLine = 200-12
 colorLine = 200-8
 
 animCss :: T.Text
-animCss =
+animCss = baseCss <>
   clines [ "#rasterbeam {"
          , "  animation-name: rasterline;"
          , "  animation-duration: 4s;"
@@ -59,7 +59,6 @@ animCss =
          , makeHighlightAnim "hilite1" startLine
          , makeHighlightAnim "hilite2" modeswitchLine
          , makeHighlightAnim "hilite3" colorLine
-         , "#title { font-family: \"arial\";}"
          ]
   where
     pixYPerc y = (y - beamStartLine) / (transYLines - beamStartLine) * 100.0

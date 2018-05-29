@@ -22,10 +22,10 @@ Here's how it looks like (with red & green rectangles overlayed on top of sprite
 
 $bintris_gamescreen_svg$
 
-You may have noticed there's a total of 11 sprites.  As the C64 hardware only supports 8 sprites, we need to multiplex hardware sprites with raster interrupts:
+That's 11 sprites in total.  As the C64 hardware only supports 8 sprites, we need to multiplex hardware sprites with raster interrupts:
 
 1. Program sprites 0-3 for the BINTRIS logo at the top of the frame, before the raster beam reaches the logo.
-2. Once the raster beam's past the BINTRIS logo, program sprites 0-6 to be used for the current score (3 sprites), falling bit (1 sprite), and the collapse noise animation (3 sprites).
+2. Once the raster beam's past the logo, program sprites 0-6 to be used for the current score (3 sprites), falling bit (1 sprite), and the collapse noise animation (3 sprites).
 
 Note that not all these sprites are always enabled: the noise animation sprites are enabled only when rows are collapsing, the falling bit is turned off during the noise animation, and if the current score is, say, less than 10, we need only one sprite for the score digits.
 
