@@ -172,11 +172,6 @@ div.white-bg img {
   border: 1px dashed #ccc;
 }
 
-div.figure img {
-  max-width: 100%;
-  height: auto;
-}
-
 .social {
     list-style: none;
     padding-left: 0;

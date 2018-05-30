@@ -1,7 +1,7 @@
 ---
 title: BINTRIS C64 game screen rendering (series part 4)
 author: Janne Hellsten
-public: true
+public: false
 series: bintris-c64
 thumb: /images/bintris/gamescreen-social-thumb.png
 ---
@@ -38,7 +38,7 @@ I did skip over some details, though.  The biggest omission is the BINTRIS logo 
 
 This effect manipulates the logo sprite X locations on each scanline to achieve the line-by-line distortion effect.  It might not look like much in this .gif capture, but as far as timing sensitive code goes, this is by far the trickiest routine in the game.  There will be a blog about this effect later in the series.
 
-The game board is rendered using text-mode characters.  The charset contains an 8x8 filled rectangle which is used to clear the board area on game start or on level up.  Per-frame rendering only sets the color of each such block.
+The game board is rendered using text mode characters.  The charset contains an 8x8 filled rectangle which is used to clear the board area on game start or on level up.  Per-frame rendering only sets the color of each such block.
 
 Board state is represented by two arrays: `setbit` and `bits` (16 bytes each).  The `setbit` array encodes which cells contain a block (one bit per column, one byte per row).  The `bits` array containts the actual bit values.  The code to render the board is pretty simple with these two arrays:
 
