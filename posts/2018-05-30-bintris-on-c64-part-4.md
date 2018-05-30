@@ -1,7 +1,7 @@
 ---
 title: BINTRIS C64 game screen rendering (series part 4)
 author: Janne Hellsten
-public: false
+public: true
 series: bintris-c64
 thumb: /images/bintris/gamescreen-social-thumb.png
 ---
@@ -77,6 +77,6 @@ That's roughly 31 clock cycles per block.  In the [BINTRIS web version][bintris]
 Next in series
 --------------
 
-The next post will discuss how the main BINTRIS game screen is rendered.
+The next post will discuss vertical scrolling with flexible line distance (FLD) and will also go into details on how the BINTRIS logo warp was done.
 
 [bintris]: http://nurpax.com/bintris
