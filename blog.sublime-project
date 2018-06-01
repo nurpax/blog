@@ -1,9 +1,23 @@
 {
+	"build_systems":
+	[
+		{
+			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+			"name": "Anaconda Python Builder",
+			"selector": "source.python",
+			"shell_cmd": "\"python\" -u \"$file\""
+		}
+	],
 	"folders":
 	[
 		{
-			"path": ".",
-	        "folder_exclude_patterns": [".stack-work", "_cache", "_site"]
-    	}
-    ]
+			"folder_exclude_patterns":
+			[
+				".stack-work",
+				"_cache",
+				"_site"
+			],
+			"path": "."
+		}
+	]
 }

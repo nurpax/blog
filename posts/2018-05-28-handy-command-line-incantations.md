@@ -49,3 +49,10 @@ Convert a VICE video capture .avi (in DivX format) to MP4:
 ```
 ffmpeg -i screencap.avi -c:v libx264 -crf 19 -preset slow -c:a libvo_aacenc -b:a 192k -ac 2 out.mp4
 ```
+
+Convert a series of image files into an MP4:
+
+```
+ffmpeg -r 25 -i 'frame_%04d.png' -c:v libx264 -vf fps=25 -pix_fmt yuv420p out.mp4
+```
+
