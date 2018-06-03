@@ -48,22 +48,21 @@ p.contact-details {
   font-size: 0.8em;
 }
 
-h1 {
+h1, h2, h3, h4, h5 {
   display: block;
+  font-family:'Lucida Grande', Helvetica, Arial, sans-serif;
   font-size: 1.2em;
+  color:#444;
+  text-decoration:none;
   -webkit-margin-before: 0.67em;
-  -webkit-margin-after: 0.67em;
+  -webkit-margin-after: 0.20em;
   -webkit-margin-start: 0px;
-  -webkit-margin-end: 0px;
 }
 
-h1, h2, h3, h4, h5 {
-  font-family:'Lucida Grande', Helvetica, Arial, sans-serif;
-  text-decoration:none;
-  color:#444;
-  font-weight: bold;
-  margin-bottom:0px;
-  margin-top:0.4em;
+
+h2, h3, h4, h5 {
+  margin-bottom:0.8em;
+  margin-top:0.8em;
 }
 
 h2 {
@@ -105,6 +104,7 @@ table th,td {
   background-image: url(/images/bloghead2.jpg);
   background-repeat: no-repeat;
   border: 0px solid #000;
+  min-height: 40px;
 }
 
 #header h1 {
