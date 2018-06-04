@@ -77,11 +77,7 @@ buildRules = do
         route   idRoute
         compile compressCssCompiler
 
-    match "images/*" $ do
-        route   idRoute
-        compile copyFileCompiler
-
-    match "images/bintris/*" $ do
+    match "images/**" $ do
         route   idRoute
         compile copyFileCompiler
 
