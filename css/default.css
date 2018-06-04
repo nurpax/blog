@@ -85,6 +85,15 @@ table th,td {
     border: none; /*1px solid #bbb;*/
 }
 
+/*
+  medium wide img, use 70% column witdth on desktop, full width on mobile.
+
+  <img class="img-medium-wide" />
+*/
+.img-medium-wide {
+  width: 70%;
+}
+
 @media only screen and (max-width: 768px) {
 #page-wrap {
     width: 100%;
@@ -92,6 +101,10 @@ table th,td {
     padding: 0em;
     background:#fff;
     border: none;
+}
+
+.img-medium-wide {
+  width: 100%;
 }
 }
 
@@ -228,6 +241,7 @@ To make an image layout with captions, do:
    </p>
  </div>
 */
+
 div.img-columns-2 {
   display: flex; /* or inline-flex */
   justify-content: space-between;
@@ -243,3 +257,34 @@ div.img-columns-2 {
 p.img-column {
   font-size: 1.0em;
 }
+
+.img-small {
+  width: 30%;
+}
+
+.img-smallest {
+  width: 15%;
+}
+
+/* sine wave blog post related. would be nice if these could be moved into
+/* markdown instead of setting globally here. */
+div.sine-columns-2 {
+  display: flex; /* or inline-flex */
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.sine-column-1 {
+  width: 70%;
+  padding: 0px;
+  margin:0px;
+}
+
+.sine-column-2 {
+  width: 15%;
+  padding: 0px;
+  margin:0px;
+  margin-left: 1em;
+}
+
+
