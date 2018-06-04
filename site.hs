@@ -8,7 +8,12 @@ import qualified GHC.IO.Encoding as E
 
 import           Hakyll
 import           Hakyll.Core.Metadata
-import           Text.Pandoc (Pandoc, Block, Inline(..), MathType(..))
+import           Text.Pandoc (
+                   Pandoc
+                 , Block
+                 , Inline(..)
+                 , MathType(..)
+                 )
 import           Text.Pandoc.Walk (walk)
 
 import qualified Diagrams.Bintris as Bintris
@@ -51,7 +56,10 @@ publicOnly i = i >>= \lst -> filterM isPublic lst
 -- inserting SVG for diagrams
 pandocCompilerXform :: (Pandoc -> Pandoc) -> Compiler (Item String)
 pandocCompilerXform f =
-    pandocCompilerWithTransform defaultHakyllReaderOptions defaultHakyllWriterOptions f
+    pandocCompilerWithTransform
+        defaultHakyllReaderOptions
+        defaultHakyllWriterOptions
+        f
 
 substDiagrams :: Pandoc -> Pandoc
 substDiagrams doc = walk bintrisSvg doc

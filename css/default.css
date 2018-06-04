@@ -4,7 +4,7 @@ body {
     font-size: 1.1em;
     line-height: 1.5;
     color: #333;
-    background: #dcdcda;
+    background: #dfdfdf;
     margin:0px;
 }
 
@@ -83,7 +83,7 @@ table th,td {
     margin: 0em auto;
     padding: 0em;
     background:#fff;
-    border: 1px solid #bbb;
+    border: none; /*1px solid #bbb;*/
 }
 
 @media only screen and (max-width: 768px) {
@@ -205,4 +205,41 @@ div.white-bg img {
 
 .img-pixelated {
   image-rendering: pixelated;
+}
+
+/* Two column image layout.  Wrap in img-columns-2 container, then add img-
+/* column to both children:
+
+ <div class="img-columns-2">
+   <img class="img-column" />
+   <img class="img-column" />
+ </div>
+
+To make an image layout with captions, do:
+
+ <div class="img-columns-2">
+   <p class="img-column">
+     <img ... />
+     Text here
+   </p>
+   <p class="img-column">
+     <img ... />
+     Text here
+   </p>
+ </div>
+*/
+div.img-columns-2 {
+  display: flex; /* or inline-flex */
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.img-column {
+  width: 48%;
+  padding: 0px;
+  margin:0px;
+}
+
+p.img-column {
+  font-size: 1.0em;
 }
