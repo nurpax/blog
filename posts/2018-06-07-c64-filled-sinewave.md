@@ -13,7 +13,7 @@ This generated a lot of lively discussion on [twitter](https://twitter.com/nurpa
 
 The main idea is to use character mode with a custom character set.  I sample y-coordinate every 8 pixels to produce a list of line segments $[(0, y_0), (8, y_1), (16, y_2), ..., (320, y_40)]$.  In the below animation, you can see these line segments along with blue rectangles that signify which 8x8 character blocks intersect the line segments.
 
-<img class="sine-column-1" src="/images/c64/sine/sinewave-block-cover.gif"/>
+<img class="img-medium-wide" src="/images/c64/sine/sinewave-block-cover.gif"/>
 
 The goal then is to fill all the pixels below a line segment with light blue and everything above it with dark blue.
 
