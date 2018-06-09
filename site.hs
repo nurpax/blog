@@ -3,6 +3,8 @@ module Main where
 
 import           Control.Applicative ((<|>))
 import           Control.Monad (filterM, void)
+import           Data.List (elem)
+import           Data.Maybe (listToMaybe)
 import           Data.Monoid   ((<>), mconcat)
 import qualified GHC.IO.Encoding as E
 
@@ -10,11 +12,11 @@ import           Hakyll
 import           Hakyll.Core.Metadata
 import           Text.Pandoc (
                    Pandoc
-                 , Block
+                 , Block (..)
                  , Inline(..)
                  , MathType(..)
                  )
-import           Text.Pandoc.Walk (walk)
+import           Text.Pandoc.Walk (walk, query)
 
 import qualified Diagrams.Bintris as Bintris
 
@@ -70,6 +72,34 @@ substDiagrams doc = walk bintrisSvg doc
     bintrisSvg e = e
     rawHtml html = RawInline "html" html
 
+-- Get rid of ``` {.hakyll-inline-css} blocks in Pandoc so that the inline
+-- styles don't get output as <pre> blocks.
+removeInlineCss :: Pandoc -> Pandoc
+removeInlineCss doc = walk removeCSS doc
+  where
+    removeCSS block@(CodeBlock (_, classes, _) _) =
+      if "hakyll-inline-css" `elem` classes then
+        Null
+      else
+        block
+    removeCSS elt = elt
+
+-- Extract CSS fragments from ``` {.hakyll-inline-css} blocks.  The contents
+-- of this verbatim block will be inserted into the page <head> as a <style>
+-- element.
+extractInlineCss :: Item String -> Compiler (Maybe String)
+extractInlineCss body = do
+  doc <- readPandoc body
+  return . listToMaybe . query extractCssBlock $ doc
+  where
+    extractCssBlock :: Block -> [String]
+    extractCssBlock block@(CodeBlock (_, classes, _) b) =
+      if "hakyll-inline-css" `elem` classes then
+        [b]
+      else
+        []
+    extractCssBlock block = []
+
 buildRules :: Rules ()
 buildRules = do
     -- Compress CSS
@@ -92,12 +122,16 @@ buildRules = do
     -- Render posts
     match "posts/*" $ do
         route   $ setExtension ".html"
-        compile $ pandocCompilerXform substDiagrams
-            >>= saveSnapshot "content"
-            >>= return . fmap demoteHeaders
-            >>= loadAndApplyTemplate "templates/post.html" postCtx
-            >>= loadAndApplyTemplate "templates/default.html" postCtx
-            >>= relativizeUrls
+        compile $ do
+          body <- getResourceBody
+          inlineCss <- extractInlineCss body
+          let postCtx' = maybe postCtx (\css -> postCtx <> constField "inline_css" css) inlineCss
+          pandocCompilerXform (removeInlineCss . substDiagrams)
+             >>= saveSnapshot "content"
+             >>= return . fmap demoteHeaders
+             >>= loadAndApplyTemplate "templates/post.html" postCtx'
+             >>= loadAndApplyTemplate "templates/default.html" postCtx'
+             >>= relativizeUrls
 
     -- Post list
     create ["posts.html"] $ do

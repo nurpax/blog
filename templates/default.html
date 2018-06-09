@@ -30,7 +30,11 @@
     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
   })();
 
-</script>
+</script>$if(inline_css)$
+<style>
+$inline_css$
+</style>
+$endif$
     </head>
     <body>
 
