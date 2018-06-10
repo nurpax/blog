@@ -15,6 +15,9 @@ import           Text.Pandoc (
                  , Block (..)
                  , Inline(..)
                  , MathType(..)
+                 , Extension(Ext_native_divs)
+                 , readerExtensions
+                 , disableExtension
                  )
 import           Text.Pandoc.Walk (walk, query)
 
@@ -57,11 +60,18 @@ publicOnly i = i >>= \lst -> filterM isPublic lst
 -- | Read a page render using pandoc and apply some substitutions like
 -- inserting SVG for diagrams
 pandocCompilerXform :: (Pandoc -> Pandoc) -> Compiler (Item String)
-pandocCompilerXform f =
+pandocCompilerXform f = do
     pandocCompilerWithTransform
-        defaultHakyllReaderOptions
+        readerOptions
         defaultHakyllWriterOptions
         f
+    where
+      readerExts = readerExtensions defaultHakyllReaderOptions
+      readerOptions =
+        defaultHakyllReaderOptions {
+          readerExtensions = disableExtension Ext_native_divs readerExts
+        }
+
 
 substDiagrams :: Pandoc -> Pandoc
 substDiagrams doc = walk bintrisSvg doc
