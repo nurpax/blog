@@ -2,41 +2,142 @@
 var snabbdom = require('snabbdom');
 var patch = snabbdom.init([ // Init patch function with chosen modules
   require('snabbdom/modules/attributes').default, // makes it easy to toggle classes
+  require('snabbdom/modules/style').default,
 ]);
 var h = require('snabbdom/h').default; // helper function for creating vnodes
 
+const WIDTH = 384
+const HEIGHT = 272
+
+const ANIM_START_LINE = 48
+
+// Covert a pixel position in the VICE screenshot resolution to actual C64 Y position
+function pixYtoC64(y) {
+  return y-35 + 51
+}
+
+function c64YtoPix(y) {
+  return y-51 + 35
+}
+
+function translate(x, y) {
+  return `translate(${x}, ${y})`
+}
+
+function makeCycleBlocks ({activeCycle, ...props}) {
+  let res = []
+  const BW = 5
+  const BH = 5
+  for (var i = 0; i < 63; i++) {
+    const x = BW * i
+    const y = 0
+    const fill = activeCycle == i ? '#8f8' : '#444'
+    const attrs = {
+      fill,
+      width: BW,
+      height: BH,
+      x, y,
+      "stroke-width": 1,
+      stroke: '#aaa'
+    }
+    const block = h('rect', {attrs})
+    res.push(block)
+  }
+  return h('g', { attrs: {transform:translate(props.x, props.y)}}, res)
+}
+
+function rasterBeam({line, activeCycle}) {
+  // raster hits visible screen area at cycle 12
+  const x = ((activeCycle - 12) * 8) + 32
+  return h('g', [
+    h('rect', {attrs: {
+      fill: '#fff',
+      width: 2,
+      height: 2,
+      x,
+      y: c64YtoPix(line)
+    }})
+  ])
+  return
+}
+
+function bottomUI ({activeCycle, line}) {
+  const col2style = {
+    width: '20px',
+    'margin-left': '1em'
+  }
+  const col3style = {
+    'margin-left': '1em',
+    'align-self': 'center'
+  }
+  let badline = ''
+  if (line > 0x30 && (line & 7) == 3) {
+    badline = h('span', {style: {fontSize:'1.3em', color:'#f00'}}, 'BAD LINE')
+  }
+  return h('div', {style: {display: 'flex'}}, [
+    h('div', ['Clock cycle', h('br'),
+              'Line', h('br')]),
+    h('div', {style: col2style}, [
+      `${activeCycle}`,
+      h('br'),
+      `${line} `
+    ]),
+    h('div', {style: col3style}, [badline])
+  ])
+}
+
 class TimingDiagram {
+
   constructor () {
     this.vnode = null
-    this.theta = 0.0
+    this.state = {
+      line: ANIM_START_LINE,
+      activeCycle: 0
+    }
   }
 
-  view () {
+  view (props) {
     var view = h('div', [
-      h('svg', {attrs: {width: 100, height: 100}}, [
-        h('circle', {attrs: {cx: 50, cy: 50, r: Math.sin(this.theta)*10.0+40, fill: 'blue'}})
-      ])
+      h('svg', {attrs: {width: '100%', viewBox: `0 0 ${WIDTH} ${HEIGHT}`}}, [
+        h('image', {attrs: {width:384, height: 272, href:'/images/bintris/c64-basic.png'}}),
+        makeCycleBlocks({
+          x: 20,
+          y: 240,
+          activeCycle:props.activeCycle
+        }),
+        rasterBeam(props)
+      ]),
+      bottomUI(props)
     ])
     return view
   }
 
-  render () {
-    patch(this.vnode, this.view())
+  render (props) {
+    this.vnode = patch(this.vnode, this.view(props))
   }
 
   mount (container) {
-    this.vnode = patch(container, this.view())
+    this.vnode = patch(container, this.view(this.state))
 
     setInterval(cb => {
-      this.render()
-      this.theta += 0.1
+      this.render(this.state)
+
+      this.state.activeCycle++
+      if (this.state.activeCycle >= 63) {
+        this.state.activeCycle = 0
+        this.state.line++
+
+        if (this.state.line >= ANIM_START_LINE+16) {
+          this.state.line = ANIM_START_LINE
+        }
+      }
     }, 100)
   }
 }
 
 module.exports = { TimingDiagram };
 
-},{"snabbdom":6,"snabbdom/h":2,"snabbdom/modules/attributes":5}],2:[function(require,module,exports){
+},{"snabbdom":7,"snabbdom/h":2,"snabbdom/modules/attributes":5,"snabbdom/modules/style":6}],2:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var vnode_1 = require("./vnode");
@@ -96,7 +197,7 @@ exports.h = h;
 ;
 exports.default = h;
 
-},{"./is":4,"./vnode":8}],3:[function(require,module,exports){
+},{"./is":4,"./vnode":9}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function createElement(tagName) {
@@ -229,6 +330,93 @@ exports.attributesModule = { create: updateAttrs, update: updateAttrs };
 exports.default = exports.attributesModule;
 
 },{}],6:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var raf = (typeof window !== 'undefined' && window.requestAnimationFrame) || setTimeout;
+var nextFrame = function (fn) { raf(function () { raf(fn); }); };
+function setNextFrame(obj, prop, val) {
+    nextFrame(function () { obj[prop] = val; });
+}
+function updateStyle(oldVnode, vnode) {
+    var cur, name, elm = vnode.elm, oldStyle = oldVnode.data.style, style = vnode.data.style;
+    if (!oldStyle && !style)
+        return;
+    if (oldStyle === style)
+        return;
+    oldStyle = oldStyle || {};
+    style = style || {};
+    var oldHasDel = 'delayed' in oldStyle;
+    for (name in oldStyle) {
+        if (!style[name]) {
+            if (name[0] === '-' && name[1] === '-') {
+                elm.style.removeProperty(name);
+            }
+            else {
+                elm.style[name] = '';
+            }
+        }
+    }
+    for (name in style) {
+        cur = style[name];
+        if (name === 'delayed' && style.delayed) {
+            for (var name2 in style.delayed) {
+                cur = style.delayed[name2];
+                if (!oldHasDel || cur !== oldStyle.delayed[name2]) {
+                    setNextFrame(elm.style, name2, cur);
+                }
+            }
+        }
+        else if (name !== 'remove' && cur !== oldStyle[name]) {
+            if (name[0] === '-' && name[1] === '-') {
+                elm.style.setProperty(name, cur);
+            }
+            else {
+                elm.style[name] = cur;
+            }
+        }
+    }
+}
+function applyDestroyStyle(vnode) {
+    var style, name, elm = vnode.elm, s = vnode.data.style;
+    if (!s || !(style = s.destroy))
+        return;
+    for (name in style) {
+        elm.style[name] = style[name];
+    }
+}
+function applyRemoveStyle(vnode, rm) {
+    var s = vnode.data.style;
+    if (!s || !s.remove) {
+        rm();
+        return;
+    }
+    var name, elm = vnode.elm, i = 0, compStyle, style = s.remove, amount = 0, applied = [];
+    for (name in style) {
+        applied.push(name);
+        elm.style[name] = style[name];
+    }
+    compStyle = getComputedStyle(elm);
+    var props = compStyle['transition-property'].split(', ');
+    for (; i < props.length; ++i) {
+        if (applied.indexOf(props[i]) !== -1)
+            amount++;
+    }
+    elm.addEventListener('transitionend', function (ev) {
+        if (ev.target === elm)
+            --amount;
+        if (amount === 0)
+            rm();
+    });
+}
+exports.styleModule = {
+    create: updateStyle,
+    update: updateStyle,
+    destroy: applyDestroyStyle,
+    remove: applyRemoveStyle
+};
+exports.default = exports.styleModule;
+
+},{}],7:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var vnode_1 = require("./vnode");
@@ -538,7 +726,7 @@ function init(modules, domApi) {
 }
 exports.init = init;
 
-},{"./h":2,"./htmldomapi":3,"./is":4,"./thunk":7,"./vnode":8}],7:[function(require,module,exports){
+},{"./h":2,"./htmldomapi":3,"./is":4,"./thunk":8,"./vnode":9}],8:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var h_1 = require("./h");
@@ -586,7 +774,7 @@ exports.thunk = function thunk(sel, key, fn, args) {
 };
 exports.default = exports.thunk;
 
-},{"./h":2}],8:[function(require,module,exports){
+},{"./h":2}],9:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function vnode(sel, data, children, text, elm) {

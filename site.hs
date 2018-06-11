@@ -121,7 +121,7 @@ buildRules = do
         route   idRoute
         compile copyFileCompiler
 
-    match "js/*" $ do
+    match "js/**" $ do
         route   idRoute
         compile copyFileCompiler
 

@@ -34,6 +34,19 @@ To understand FLD, you need to grasp the concept of Bad Lines.  I'll summarize B
 
 - TODO: animation with 200 lines + border showing where bad lines are. can be similar to what was done for textmode/bitmap mode.  or maybe this should be side by side with a scanline bad line anim + the whole screen.
 
+<div id="container">
+</div>
+
+<script type="text/javascript">
+
+let diagram
+
+$(function () {
+    diagram = new diagrams.TimingDiagram()
+    diagram.mount(document.getElementById("container"))
+})
+</script>
+
 
 Next in series
 --------------
