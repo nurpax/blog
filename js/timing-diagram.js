@@ -8,7 +8,7 @@ var h = require('snabbdom/h').default; // helper function for creating vnodes
 const WIDTH = 384
 const HEIGHT = 272
 
-const ANIM_START_LINE = 48
+const ANIM_START_LINE = 51 + 3*8
 
 // Covert a pixel position in the VICE screenshot resolution to actual C64 Y position
 function pixYtoC64(y) {
@@ -19,25 +19,31 @@ function c64YtoPix(y) {
   return y-51 + 35
 }
 
+function isBadLine(line) {
+  return (line >= 0x30 && line <= 0xf7) && (line & 7) == 3
+}
+
 function translate(x, y) {
   return `translate(${x}, ${y})`
 }
 
-function makeCycleBlocks ({activeCycle, ...props}) {
+function makeCycleBlocks ({activeCycle, badline, ...props}) {
   let res = []
   const BW = 5
   const BH = 5
   for (var i = 0; i < 63; i++) {
     const x = BW * i
     const y = 0
-    const fill = activeCycle == i ? '#8f8' : '#444'
+    const executing = badline ? (i < 12) || (i >= 54) : true
+    let fill = activeCycle == i ? '#fff' : '#2e2'
+    if (!executing) {
+      fill = '#000'
+    }
     const attrs = {
       fill,
-      width: BW,
-      height: BH,
-      x, y,
-      "stroke-width": 1,
-      stroke: '#aaa'
+      width: BW-1,
+      height: BH-1,
+      x, y
     }
     const block = h('rect', {attrs})
     res.push(block)
@@ -66,14 +72,24 @@ function bottomUI ({activeCycle, line}) {
     'margin-left': '1em'
   }
   const col3style = {
-    'margin-left': '1em',
-    'align-self': 'center'
+    'margin-left': '1.5em',
+    'align-self': 'center',
+    'min-width':'8.5em',
   }
   let badline = ''
-  if (line > 0x30 && (line & 7) == 3) {
-    badline = h('span', {style: {fontSize:'1.3em', color:'#f00'}}, 'BAD LINE')
+  if (isBadLine(line)) {
+    badline = h('span', {style: {fontSize:'1.0em', color:'#f00'}}, 'BAD LINE')
   }
-  return h('div', {style: {display: 'flex'}}, [
+  const contStyle = {
+    'font-family': 'C64 Pro Local',
+    'letter-spacing':'1px',
+    display: 'flex',
+    'padding-bottom':'1em',
+    'justify-content':'center',
+    'background-color':'rgb(177,158,255)',
+    fontSize:'0.8em'
+  }
+  return h('div', {style: contStyle}, [
     h('div', ['Clock cycle', h('br'),
               'Line', h('br')]),
     h('div', {style: col2style}, [
@@ -97,12 +113,13 @@ class TimingDiagram {
 
   view (props) {
     var view = h('div', [
-      h('svg', {attrs: {width: '100%', viewBox: `0 0 ${WIDTH} ${HEIGHT}`}}, [
+      h('svg', {style:{display:'block'}, attrs: {width: '100%', viewBox: `0 0 ${WIDTH} ${HEIGHT}`}}, [
         h('image', {attrs: {width:384, height: 272, href:'/images/bintris/c64-basic.png'}}),
         makeCycleBlocks({
-          x: 20,
+          x: 34,
           y: 240,
-          activeCycle:props.activeCycle
+          badline: isBadLine(props.line),
+          activeCycle: props.activeCycle
         }),
         rasterBeam(props)
       ]),
@@ -118,6 +135,7 @@ class TimingDiagram {
   mount (container) {
     this.vnode = patch(container, this.view(this.state))
 
+    // TODO don't loop the anim.. burns battery on mobile
     setInterval(cb => {
       this.render(this.state)
 

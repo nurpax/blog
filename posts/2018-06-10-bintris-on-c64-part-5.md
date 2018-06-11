@@ -6,6 +6,13 @@ series: bintris-c64
 thumb: /images/bintris/bintris-writer-fld.gif
 ---
 
+``` {.hakyll-inline-css}
+@font-face {
+     font-family: "C64 Pro Local";
+     src: url("/images/bintris/C64_Pro-STYLE.woff") format("woff");
+}
+```
+
 (Looking for the BINTRIS C64 disk image?  Find it [here](/posts/2018-05-21-bintris-on-c64-part-2.html).)
 
 TODO introduce the BINTRIS blog series.
