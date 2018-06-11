@@ -1,0 +1,14 @@
+{
+  "scripts": {
+    "build": "browserify --standalone diagrams js/timing-diagram.js -o js/build/timing-diagram.js",
+    "watch": "watchify --standalone diagrams js/timing-diagram.js  -o js/build/timing-diagram.js"
+  },
+  "dependencies": {
+    "babel": "^6.23.0",
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "browserify": "^16.2.2",
+    "snabbdom": "^0.7.1",
+    "watchify": "^3.11.0"
+  }
+}
