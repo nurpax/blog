@@ -12,6 +12,11 @@ thumb: /images/bintris/bintris-writer-fld.gif
      src: url("/images/bintris/C64_Pro-STYLE.woff") format("woff");
 }
 
+.status {
+    font-family: 'C64 Pro Local';
+    font-size:0.3em;
+}
+
 /* 0.1s duration must match cycle timing in timing-diagram.js */
 .move-beam {
   transition: transform 0.1s;
@@ -40,10 +45,14 @@ Here are the effects in action:
     </p>
 </div>
 
+Note: timing values in this post are for PAL-B C64 models.
+
 Bad Lines
 ---------
 
-To understand FLD, you need to grasp the concept of Bad Lines.  I'll summarize Bad Lines in this post but you can read about it in more detail in the excellent [vic-ii.txt document][fld] (section 3.5).  The same document also explains FLD in section 3.14.2.
+To understand FLD, you need to grasp the concept of Bad Lines.  I'll summarize Bad Lines here but you can read about it in more detail in the excellent [vic-ii.txt document][fld] (section 3.5).  The same document also explains FLD in section 3.14.2.
+
+The VIC scans out the video frame line-by-line.  Each line takes exactly 63 clock cycles.  On "normal" lines, all these 63 cycles are available to the CPU.  However, on every 8th pixel row (start of a new character row), the VIC needs an extra 40 cycles to fetch one line of character codes from memory.
 
 - TODO: animation with 200 lines + border showing where bad lines are. can be similar to what was done for textmode/bitmap mode.  or maybe this should be side by side with a scanline bad line anim + the whole screen.
 
