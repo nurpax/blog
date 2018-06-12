@@ -11,6 +11,12 @@ thumb: /images/bintris/bintris-writer-fld.gif
      font-family: "C64 Pro Local";
      src: url("/images/bintris/C64_Pro-STYLE.woff") format("woff");
 }
+
+/* 0.1s duration must match cycle timing in timing-diagram.js */
+.move-beam {
+  transition: transform 0.1s;
+  transition-timing-function: steps(8, start);
+}
 ```
 
 (Looking for the BINTRIS C64 disk image?  Find it [here](/posts/2018-05-21-bintris-on-c64-part-2.html).)

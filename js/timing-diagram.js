@@ -5,6 +5,8 @@ var patch = snabbdom.init([ // Init patch function with chosen modules
 ]);
 var h = require('snabbdom/h').default; // helper function for creating vnodes
 
+const MS_PER_CYCLE = 100
+
 const WIDTH = 384
 const HEIGHT = 272
 
@@ -54,12 +56,15 @@ function makeCycleBlocks ({activeCycle, badline, ...props}) {
 function rasterBeam({line, activeCycle}) {
   // raster hits visible screen area at cycle 12
   const x = ((activeCycle - 12) * 8) + 32
+  // Reset CSS anim on scanline start
+  const animClass = activeCycle == 0 ? "" : ".move-beam"
   return h('g', [
-    h('rect', {attrs: {
+    h(`rect${animClass}`, {attrs: {
       fill: '#fff',
       width: 2,
       height: 2,
-      x,
+      transform:translate(x, 0),
+      x:0,
       y: c64YtoPix(line)
     }})
   ])
@@ -74,7 +79,8 @@ function bottomUI ({activeCycle, line}) {
   const col3style = {
     'margin-left': '1.5em',
     'align-self': 'center',
-    'min-width':'8.5em',
+    'min-width':'8.0em',
+    fontSize:'1.1em'
   }
   let badline = ''
   if (isBadLine(line)) {
@@ -140,6 +146,7 @@ class TimingDiagram {
       this.render(this.state)
 
       this.state.activeCycle++
+//this.state.activeCycle = 20
       if (this.state.activeCycle >= 63) {
         this.state.activeCycle = 0
         this.state.line++
@@ -148,7 +155,7 @@ class TimingDiagram {
           this.state.line = ANIM_START_LINE
         }
       }
-    }, 100)
+    }, MS_PER_CYCLE)
   }
 }
 
