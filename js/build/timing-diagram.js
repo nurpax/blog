@@ -136,9 +136,19 @@ function bottomUI ({activeCycle, line}) {
   ])
 }
 
-class TimingDiagram {
+class VdomDiagram {
   constructor () {
     this.vnode = null
+  }
+
+  render (props) {
+    this.vnode = patch(this.vnode, this.view(props))
+  }
+}
+
+class TimingDiagram extends VdomDiagram{
+  constructor () {
+    super()
     this.state = {
       line: ANIM_START_LINE,
       activeCycle: 0
@@ -164,10 +174,6 @@ class TimingDiagram {
     return view
   }
 
-  render (props) {
-    this.vnode = patch(this.vnode, this.view(props))
-  }
-
   mount (container) {
     this.vnode = patch(container, this.view(this.state))
 
@@ -176,7 +182,6 @@ class TimingDiagram {
       this.render(this.state)
 
       this.state.activeCycle++
-//this.state.activeCycle = 20
       if (this.state.activeCycle >= 63) {
         this.state.activeCycle = 0
         this.state.line++
@@ -189,7 +194,68 @@ class TimingDiagram {
   }
 }
 
-module.exports = { TimingDiagram };
+class FldDiagram extends VdomDiagram{
+  constructor () {
+    super()
+    this.state = {
+    }
+  }
+
+  view (props) {
+    const mkimg = (cls) => {
+      return h('image', {attrs: {class:`img-pixelated ${cls}`, width:384, height: 272, href:'/images/bintris/c64-basic.png'}})
+    }
+    const imgTop = mkimg('c64-fld-top')
+    const imgBottom = mkimg('c64-fld-bottom')
+    const imgBottomBorder = mkimg('c64-fld-bottom-border')
+    var view = h('div', [
+      h('svg', {style:{display:'block', backgroundColor:'#000'}, attrs: {
+        width: '100%', viewBox: `0 0 ${WIDTH} ${HEIGHT}`
+      }},
+      [
+        imgTop,
+        imgBottom,
+        imgBottomBorder,
+        h('rect', {attrs:{x:0,y:0,width:32, height:HEIGHT, fill:'rgb(177,158,255)'}}),
+        h('rect', {attrs:{x:WIDTH-32,y:0,width:32, height:HEIGHT, fill:'rgb(177,158,255)'}})
+      ])
+    ])
+    return view
+  }
+
+  mount (container) {
+    this.vnode = patch(container, this.view(this.state))
+  }
+}
+
+class LogoWarpCrop extends VdomDiagram{
+  constructor () {
+    super()
+    this.state = {
+    }
+  }
+
+  view (props) {
+    const mkimg = (cls) => {
+      return h('image', {attrs: {class:`img-pixelated ${cls}`, width:384, height: 272, href:'/images/bintris/bintris-logo-wobble.gif'}})
+    }
+    var view = h('div', [
+      h('svg', {style:{display:'block', backgroundColor:'#000'}, attrs: {
+        width: '100%', viewBox: `40 0 ${WIDTH/2.5} ${HEIGHT/2.5}`
+      }},
+      [
+        mkimg('logo-warp-crop')
+      ])
+    ])
+    return view
+  }
+
+  mount (container) {
+    this.vnode = patch(container, this.view(this.state))
+  }
+}
+
+module.exports = { TimingDiagram, FldDiagram, LogoWarpCrop };
 
 },{"snabbdom":7,"snabbdom/h":2,"snabbdom/modules/attributes":5,"snabbdom/modules/style":6}],2:[function(require,module,exports){
 "use strict";
