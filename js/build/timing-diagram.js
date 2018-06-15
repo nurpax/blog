@@ -1,10 +1,87 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.diagrams = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
+
+const R  = 'R'
+const W  = 'W'
+const RW = 'RW'
+
+function isZeroPage (addr) {
+  return addr.length === 2
+}
+
+function parseTiming (insn) {
+  let m
+  const i = insn.toLowerCase()
+  if (m = /(?:lda|ldx|ldy) \$(.*)/.exec(i)) {
+    return isZeroPage(m[1]) ? [R, R, R] : [R, R, R, RW]
+  }
+  if (m = /(?:lda|ldx|ldy) \#/.exec(i)) {
+    return [R, R]
+  }
+  if (m = /(?:sta|stx|sty) \$(.*)/.exec(i)) {
+    return isZeroPage(m[1]) ? [R, R, RW] : [R, R, R, RW]
+  }
+  if (m = /(?:inc|dec|asl|lsr) \$(.*)/.exec(i)) {
+    return isZeroPage(m[1]) ? [R, R, R, R, W] : [R, R, R, R, R, W]
+  }
+  if (m = /bit \$(.*)/.exec(i)) {
+    return isZeroPage(m[1]) ? [R, R, RW] : [R, R, R, RW]
+  }
+  if (m = /nop/.exec(i)) {
+    return [R, R]
+  }
+  if (m = /(?:tax|tay|tsx|txa|txs|tya)/.exec(i)) {
+    return [R, R]
+  }
+  if (m = /(?:inx|dex|iny|dey)/.exec(i)) {
+    return [R, R]
+  }
+  if (m = /(?:bne|beq)/.exec(i)) {
+    // TODO this is not static.  It's 2 if no branch taken, 3 if taken
+    return [R, R, R]
+  }
+
+  console.warn('unsupported instruction', insn)
+}
+
+function parse (str) {
+  const lines = str.split('\n')
+  const res = []
+  const insns = lines.forEach(line => {
+    const re = /\.C:([0-9A-F]+)  ((?:[0-9A-F]+)(?: [0-9A-F]+)*)  [ ]+(.*)/;
+    const m = re.exec(line)
+    if (m) {
+      const asm = m[3]
+      res.push({
+        address: m[1],
+        encoded: m[2],
+        asm,
+        timing: parseTiming(asm)
+      })
+    }
+  })
+  return res
+}
+
+module.exports = { parse, R, W, RW };
+
+},{}],2:[function(require,module,exports){
 var snabbdom = require('snabbdom');
 var patch = snabbdom.init([ // Init patch function with chosen modules
   require('snabbdom/modules/attributes').default, // makes it easy to toggle classes
   require('snabbdom/modules/style').default,
 ]);
 var h = require('snabbdom/h').default; // helper function for creating vnodes
+var asm = require('./asm.js')
+
+class VdomDiagram {
+  constructor () {
+    this.vnode = null
+  }
+
+  render (props) {
+    this.vnode = patch(this.vnode, this.view(props))
+  }
+}
 
 const MS_PER_CYCLE = 100
 
@@ -13,6 +90,55 @@ const WIDTH = 384
 const HEIGHT = 272
 
 const ANIM_START_LINE = -3+51 + 3*8
+
+const instructions_str = `
+.C:0900   .irq0:
+.C:0900  8D 79 09    STA $0979
+.C:0903  8E 7B 09    STX $097B
+.C:0906  8C 7D 09    STY $097D
+.C:0909  A9 22       LDA #$22
+.C:090b  A2 09       LDX #$09
+.C:090d  8D FE FF    STA $FFFE
+.C:0910  8E FF FF    STX $FFFF
+.C:0913  EE 12 D0    INC $D012
+.C:0916  0E 19 D0    ASL $D019
+.C:0919  BA          TSX
+.C:091a  58          CLI
+.C:091b  EA          NOP
+.C:091c  EA          NOP
+.C:091d  EA          NOP
+.C:091e  EA          NOP
+.C:091f  EA          NOP
+.C:0920  EA          NOP
+.C:0921  EA          NOP
+.C:0922   .irq1:
+.C:0922  9A          TXS
+.C:0923  A2 08       LDX #$08
+.C:0925  CA          DEX
+.C:0926  D0 FD       BNE $0925
+.C:0928  24 00       BIT $00
+.C:092a  AD 12 D0    LDA $D012
+.C:092d  CD 12 D0    CMP $D012
+.C:0930  F0 00       BEQ $0932
+.C:0932  EA          NOP
+.C:0933  EA          NOP
+.C:0934  EA          NOP
+.C:0935  EA          NOP
+.C:0936  EE 21 D0    INC $D021
+.C:0939  EE 21 D0    INC $D021
+.C:093c  EE 21 D0    INC $D021
+.C:093f  EE 21 D0    INC $D021
+.C:0942  EE 21 D0    INC $D021
+.C:0945  EE 21 D0    INC $D021
+.C:0948  A9 00       LDA #$00
+.C:094a  8D 21 D0    STA $D021
+.C:094d  24 FE       BIT $FE
+.C:094f  EA          NOP
+.C:0950  EA          NOP
+.C:0951  EA          NOP
+`
+
+let instructions = asm.parse(instructions_str)
 
 // Covert a pixel position in the VICE screenshot resolution to actual C64 Y position
 function pixYtoC64(y) {
@@ -136,14 +262,47 @@ function bottomUI ({activeCycle, line}) {
   ])
 }
 
-class VdomDiagram {
-  constructor () {
-    this.vnode = null
+// "monitor" window
+function makeAssembly ({activeCycle, badline, insnIndex, ...props}) {
+  const WIND_W = 130
+  const WIND_H = 140
+  const wind = h('rect', {attrs:{
+    x:0, y:0,
+    width:WIND_W,
+    height:WIND_H,
+    fill: '#000',
+    opacity: 0.7,
+    'stroke-width':'1px',
+    stroke: '#fff'
+  }})
+  const ni = 8
+  const min = insnIndex - ni < 0 ? 0 : insnIndex - ni
+  let max = min + 2*ni
+  if (max >= instructions.length) {
+    max = instructions.length
   }
-
-  render (props) {
-    this.vnode = patch(this.vnode, this.view(props))
-  }
+  const insns = instructions.slice(min, max)
+  const ins = insns.map((insn,idx) => {
+    const y = 10 + idx*8
+    const fill = insnIndex == min+idx ? '#fff' : '#aaa'
+    const addr = h('text.asm', {attrs: {
+      x:3,
+      y,
+      fill
+    }}, insn.address+':')
+    const asm = h('text.asm', {attrs: {
+      x:80,
+      y,
+      fill
+    }}, insn.asm)
+    const enc = h('text.asm', {attrs: {
+      x:28,
+      y,
+      fill
+    }}, insn.encoded)
+    return h('g', [addr, asm, enc])
+  })
+  return h('g', { attrs: {transform:translate(props.x, props.y)}}, [wind, ...ins])
 }
 
 class TimingDiagram extends VdomDiagram{
@@ -151,7 +310,9 @@ class TimingDiagram extends VdomDiagram{
     super()
     this.state = {
       line: ANIM_START_LINE,
-      activeCycle: 0
+      activeCycle: 0,
+      insnCycle: 0,
+      insnIndex: 0
     }
   }
 
@@ -166,12 +327,50 @@ class TimingDiagram extends VdomDiagram{
           badline,
           activeCycle: props.activeCycle
         }),
+        makeAssembly({
+          x:240,
+          y:80,
+          badline,
+          insnIndex: props.insnIndex,
+          activeCycle: props.activeCycle
+        }),
         makeFetchBlocks({...props, badline}),
         rasterBeam(props)
       ]),
       bottomUI(props)
     ])
     return view
+  }
+
+  nextLine () {
+    this.state.insnCycle = 0
+    this.state.insnIndex = 0
+    this.state.activeCycle = 0
+    this.state.line++
+
+    if (this.state.line >= ANIM_START_LINE+16) {
+      this.state.line = ANIM_START_LINE
+    }
+  }
+
+  nextCycle () {
+    this.state.activeCycle++
+
+    // Execute instructions if not "stunned"
+    if (isRunning(isBadLine(this.state.line), this.state.activeCycle)) {
+      const curInsn = instructions[this.state.insnIndex]
+      this.state.insnCycle++
+      if (this.state.insnCycle >= curInsn.timing.length) {
+        this.state.insnCycle = 0
+        this.state.insnIndex++
+        if (this.state.insnIndex >= instructions.length) {
+          console.error('insnIndex wrap around, shouldn\'t happen')
+        }
+      }
+    }
+    if (this.state.activeCycle >= 63) {
+      this.nextLine()
+    }
   }
 
   mount (container) {
@@ -181,15 +380,7 @@ class TimingDiagram extends VdomDiagram{
     setInterval(cb => {
       this.render(this.state)
 
-      this.state.activeCycle++
-      if (this.state.activeCycle >= 63) {
-        this.state.activeCycle = 0
-        this.state.line++
-
-        if (this.state.line >= ANIM_START_LINE+16) {
-          this.state.line = ANIM_START_LINE
-        }
-      }
+      this.nextCycle()
     }, MS_PER_CYCLE)
   }
 }
@@ -257,7 +448,7 @@ class LogoWarpCrop extends VdomDiagram{
 
 module.exports = { TimingDiagram, FldDiagram, LogoWarpCrop };
 
-},{"snabbdom":7,"snabbdom/h":2,"snabbdom/modules/attributes":5,"snabbdom/modules/style":6}],2:[function(require,module,exports){
+},{"./asm.js":1,"snabbdom":8,"snabbdom/h":3,"snabbdom/modules/attributes":6,"snabbdom/modules/style":7}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var vnode_1 = require("./vnode");
@@ -317,7 +508,7 @@ exports.h = h;
 ;
 exports.default = h;
 
-},{"./is":4,"./vnode":9}],3:[function(require,module,exports){
+},{"./is":5,"./vnode":10}],4:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function createElement(tagName) {
@@ -384,7 +575,7 @@ exports.htmlDomApi = {
 };
 exports.default = exports.htmlDomApi;
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.array = Array.isArray;
@@ -393,7 +584,7 @@ function primitive(s) {
 }
 exports.primitive = primitive;
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var xlinkNS = 'http://www.w3.org/1999/xlink';
@@ -449,7 +640,7 @@ function updateAttrs(oldVnode, vnode) {
 exports.attributesModule = { create: updateAttrs, update: updateAttrs };
 exports.default = exports.attributesModule;
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var raf = (typeof window !== 'undefined' && window.requestAnimationFrame) || setTimeout;
@@ -536,7 +727,7 @@ exports.styleModule = {
 };
 exports.default = exports.styleModule;
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var vnode_1 = require("./vnode");
@@ -846,7 +1037,7 @@ function init(modules, domApi) {
 }
 exports.init = init;
 
-},{"./h":2,"./htmldomapi":3,"./is":4,"./thunk":8,"./vnode":9}],8:[function(require,module,exports){
+},{"./h":3,"./htmldomapi":4,"./is":5,"./thunk":9,"./vnode":10}],9:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var h_1 = require("./h");
@@ -894,7 +1085,7 @@ exports.thunk = function thunk(sel, key, fn, args) {
 };
 exports.default = exports.thunk;
 
-},{"./h":2}],9:[function(require,module,exports){
+},{"./h":3}],10:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function vnode(sel, data, children, text, elm) {
@@ -905,5 +1096,5 @@ function vnode(sel, data, children, text, elm) {
 exports.vnode = vnode;
 exports.default = vnode;
 
-},{}]},{},[1])(1)
+},{}]},{},[2])(2)
 });

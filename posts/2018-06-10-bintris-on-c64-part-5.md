@@ -11,10 +11,19 @@ thumb: /images/bintris/bintris-writer-fld.gif
      font-family: "C64 Pro Local";
      src: url("/images/bintris/C64_Pro-STYLE.woff") format("woff");
 }
+@font-face {
+     font-family: "C64 Pro Mono Local";
+     src: url("/images/bintris/C64_Pro_Mono-STYLE.woff") format("woff");
+}
 
 .status {
     font-family: 'C64 Pro Local';
     font-size:0.3em;
+}
+
+.asm {
+    font-family: 'C64 Pro Mono Local';
+    font-size:0.25em;
 }
 
 /* 0.1s duration must match cycle timing in timing-diagram.js */
@@ -192,9 +201,9 @@ To set the the horizontal location of each sprite, we'd need to do this for ever
 }
 ```
 
-That's 32 CPU cycles.  The sprites fall on a few bad lines and on these scanlines there's only 10 cycles to spare.  Sure, it's possible to optimize this down to 24 cycles with self-modifying code but 10 cycles is unattainable.
+That's 32 CPU cycles.  The sprites fall on a few bad lines and on these scanlines there's only 10 cycles to spare.  Sure, it's possible to optimize the sprite x-coordinate stores down to 24 cycles with self-modifying code but 10 cycles is unattainable.
 
-Without bad lines, there's 52 cycles (=63-11 to account for 4 sprites) per scanline which is more than enough to move the four sprites horizontally.
+Without bad lines, there's 52 cycles (=63-11 to account for 4 sprites) per scanline which is more than enough to move all the four sprites horizontally.
 
 If only there were no bad lines..
 

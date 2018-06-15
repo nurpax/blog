@@ -4,6 +4,17 @@ var patch = snabbdom.init([ // Init patch function with chosen modules
   require('snabbdom/modules/style').default,
 ]);
 var h = require('snabbdom/h').default; // helper function for creating vnodes
+var asm = require('./asm.js')
+
+class VdomDiagram {
+  constructor () {
+    this.vnode = null
+  }
+
+  render (props) {
+    this.vnode = patch(this.vnode, this.view(props))
+  }
+}
 
 const MS_PER_CYCLE = 100
 
@@ -12,6 +23,55 @@ const WIDTH = 384
 const HEIGHT = 272
 
 const ANIM_START_LINE = -3+51 + 3*8
+
+const instructions_str = `
+.C:0900   .irq0:
+.C:0900  8D 79 09    STA $0979
+.C:0903  8E 7B 09    STX $097B
+.C:0906  8C 7D 09    STY $097D
+.C:0909  A9 22       LDA #$22
+.C:090b  A2 09       LDX #$09
+.C:090d  8D FE FF    STA $FFFE
+.C:0910  8E FF FF    STX $FFFF
+.C:0913  EE 12 D0    INC $D012
+.C:0916  0E 19 D0    ASL $D019
+.C:0919  BA          TSX
+.C:091a  58          CLI
+.C:091b  EA          NOP
+.C:091c  EA          NOP
+.C:091d  EA          NOP
+.C:091e  EA          NOP
+.C:091f  EA          NOP
+.C:0920  EA          NOP
+.C:0921  EA          NOP
+.C:0922   .irq1:
+.C:0922  9A          TXS
+.C:0923  A2 08       LDX #$08
+.C:0925  CA          DEX
+.C:0926  D0 FD       BNE $0925
+.C:0928  24 00       BIT $00
+.C:092a  AD 12 D0    LDA $D012
+.C:092d  CD 12 D0    CMP $D012
+.C:0930  F0 00       BEQ $0932
+.C:0932  EA          NOP
+.C:0933  EA          NOP
+.C:0934  EA          NOP
+.C:0935  EA          NOP
+.C:0936  EE 21 D0    INC $D021
+.C:0939  EE 21 D0    INC $D021
+.C:093c  EE 21 D0    INC $D021
+.C:093f  EE 21 D0    INC $D021
+.C:0942  EE 21 D0    INC $D021
+.C:0945  EE 21 D0    INC $D021
+.C:0948  A9 00       LDA #$00
+.C:094a  8D 21 D0    STA $D021
+.C:094d  24 FE       BIT $FE
+.C:094f  EA          NOP
+.C:0950  EA          NOP
+.C:0951  EA          NOP
+`
+
+let instructions = asm.parse(instructions_str)
 
 // Covert a pixel position in the VICE screenshot resolution to actual C64 Y position
 function pixYtoC64(y) {
@@ -135,14 +195,47 @@ function bottomUI ({activeCycle, line}) {
   ])
 }
 
-class VdomDiagram {
-  constructor () {
-    this.vnode = null
+// "monitor" window
+function makeAssembly ({activeCycle, badline, insnIndex, ...props}) {
+  const WIND_W = 130
+  const WIND_H = 140
+  const wind = h('rect', {attrs:{
+    x:0, y:0,
+    width:WIND_W,
+    height:WIND_H,
+    fill: '#000',
+    opacity: 0.7,
+    'stroke-width':'1px',
+    stroke: '#fff'
+  }})
+  const ni = 8
+  const min = insnIndex - ni < 0 ? 0 : insnIndex - ni
+  let max = min + 2*ni
+  if (max >= instructions.length) {
+    max = instructions.length
   }
-
-  render (props) {
-    this.vnode = patch(this.vnode, this.view(props))
-  }
+  const insns = instructions.slice(min, max)
+  const ins = insns.map((insn,idx) => {
+    const y = 10 + idx*8
+    const fill = insnIndex == min+idx ? '#fff' : '#aaa'
+    const addr = h('text.asm', {attrs: {
+      x:3,
+      y,
+      fill
+    }}, insn.address+':')
+    const asm = h('text.asm', {attrs: {
+      x:80,
+      y,
+      fill
+    }}, insn.asm)
+    const enc = h('text.asm', {attrs: {
+      x:28,
+      y,
+      fill
+    }}, insn.encoded)
+    return h('g', [addr, asm, enc])
+  })
+  return h('g', { attrs: {transform:translate(props.x, props.y)}}, [wind, ...ins])
 }
 
 class TimingDiagram extends VdomDiagram{
@@ -150,7 +243,9 @@ class TimingDiagram extends VdomDiagram{
     super()
     this.state = {
       line: ANIM_START_LINE,
-      activeCycle: 0
+      activeCycle: 0,
+      insnCycle: 0,
+      insnIndex: 0
     }
   }
 
@@ -165,12 +260,50 @@ class TimingDiagram extends VdomDiagram{
           badline,
           activeCycle: props.activeCycle
         }),
+        makeAssembly({
+          x:240,
+          y:80,
+          badline,
+          insnIndex: props.insnIndex,
+          activeCycle: props.activeCycle
+        }),
         makeFetchBlocks({...props, badline}),
         rasterBeam(props)
       ]),
       bottomUI(props)
     ])
     return view
+  }
+
+  nextLine () {
+    this.state.insnCycle = 0
+    this.state.insnIndex = 0
+    this.state.activeCycle = 0
+    this.state.line++
+
+    if (this.state.line >= ANIM_START_LINE+16) {
+      this.state.line = ANIM_START_LINE
+    }
+  }
+
+  nextCycle () {
+    this.state.activeCycle++
+
+    // Execute instructions if not "stunned"
+    if (isRunning(isBadLine(this.state.line), this.state.activeCycle)) {
+      const curInsn = instructions[this.state.insnIndex]
+      this.state.insnCycle++
+      if (this.state.insnCycle >= curInsn.timing.length) {
+        this.state.insnCycle = 0
+        this.state.insnIndex++
+        if (this.state.insnIndex >= instructions.length) {
+          console.error('insnIndex wrap around, shouldn\'t happen')
+        }
+      }
+    }
+    if (this.state.activeCycle >= 63) {
+      this.nextLine()
+    }
   }
 
   mount (container) {
@@ -180,15 +313,7 @@ class TimingDiagram extends VdomDiagram{
     setInterval(cb => {
       this.render(this.state)
 
-      this.state.activeCycle++
-      if (this.state.activeCycle >= 63) {
-        this.state.activeCycle = 0
-        this.state.line++
-
-        if (this.state.line >= ANIM_START_LINE+16) {
-          this.state.line = ANIM_START_LINE
-        }
-      }
+      this.nextCycle()
     }, MS_PER_CYCLE)
   }
 }
