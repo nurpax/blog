@@ -2,6 +2,7 @@ var snabbdom = require('snabbdom');
 var patch = snabbdom.init([ // Init patch function with chosen modules
   require('snabbdom/modules/attributes').default, // makes it easy to toggle classes
   require('snabbdom/modules/style').default,
+  require('snabbdom/modules/eventlisteners').default
 ]);
 var h = require('snabbdom/h').default; // helper function for creating vnodes
 var asm = require('./asm.js')
@@ -22,8 +23,53 @@ const YSCROLL = 3
 const WIDTH = 384
 const HEIGHT = 272
 
-const ANIM_START_LINE = -3+51 + 3*8
+const ANIM_START_LINE = 59
 
+// starts on raster line 59 (badline)
+const raster_badline_str = `
+.C:11ea  8D 20 D0    STA $D020
+.C:11ed  8D 21 D0    STA $D021
+.C:11f0  EA          NOP
+.C:11f1  EA          NOP
+.C:11f2  EA          NOP
+.C:11f3  A2 06       LDX #$06
+.C:11f5  BD 00 2A    LDA .colors,X
+`
+
+const raster_normal_str = `
+.C:11f8  8D 20 D0    STA $D020
+.C:11fb  8D 21 D0    STA $D021
+.C:11fe  EA          NOP
+.C:11ff  EA          NOP
+.C:1200  EA          NOP
+.C:1201  EA          NOP
+.C:1202  EA          NOP
+.C:1203  EA          NOP
+.C:1204  EA          NOP
+.C:1205  EA          NOP
+.C:1206  EA          NOP
+.C:1207  EA          NOP
+.C:1208  EA          NOP
+.C:1209  EA          NOP
+.C:120a  EA          NOP
+.C:120b  EA          NOP
+.C:120c  EA          NOP
+.C:120d  EA          NOP
+.C:120e  EA          NOP
+.C:120f  EA          NOP
+.C:1210  EA          NOP
+.C:1211  EA          NOP
+.C:1212  EA          NOP
+.C:1213  EA          NOP
+.C:1214  EA          NOP
+.C:1215  24 FE       BIT $FE
+.C:1217  A2 07       LDX #$07
+.C:1219  BD 00 2A    LDA .colors,X
+`
+
+let instructions = asm.parse(raster_badline_str + raster_normal_str)
+
+/*
 const instructions_str = `
 .C:0900   .irq0:
 .C:0900  8D 79 09    STA $0979
@@ -70,8 +116,8 @@ const instructions_str = `
 .C:0950  EA          NOP
 .C:0951  EA          NOP
 `
+*/
 
-let instructions = asm.parse(instructions_str)
 
 // Covert a pixel position in the VICE screenshot resolution to actual C64 Y position
 function pixYtoC64(y) {
@@ -91,7 +137,7 @@ function translate(x, y) {
 }
 
 function isRunning(badline, cycle) {
-  return badline ? (cycle < 12) || (cycle >= 54) : true
+  return badline ? (cycle <= 10) || (cycle >= 54) : true
 }
 
 function makeCycleBlocks ({activeCycle, badline, ...props}) {
@@ -119,6 +165,13 @@ function makeCycleBlocks ({activeCycle, badline, ...props}) {
     x:activeCycle*BW,
     y:BH+10
   }}, isRunning(badline, activeCycle) ? `cycle ${activeCycle}` : 'stunned'))
+  res.push(h('rect', {attrs:{
+    x:activeCycle*BW+1+0.5,
+    y:BH+1,
+    width:1,
+    height:4,
+    fill: '#000'
+  }}, isRunning(badline, activeCycle) ? `cycle ${activeCycle}` : 'stunned'))
   return h('g', { attrs: {transform:translate(props.x, props.y)}}, res)
 }
 
@@ -141,11 +194,11 @@ function makeFetchBlocks ({activeCycle, badline, line}) {
   return h('g', rects)
 }
 
-function rasterBeam({line, activeCycle}) {
+function rasterBeam({line, activeCycle, fast}) {
   // raster hits visible screen area at cycle 12
   const x = cycleToXPos(activeCycle)
   // Reset CSS anim on scanline start
-  const animClass = activeCycle == 0 ? "" : ".move-beam"
+  const animClass = (activeCycle == 0 || !fast) ? "" : ".move-beam"
   return h('g', [
     h(`rect${animClass}`, {attrs: {
       fill: '#fff',
@@ -159,7 +212,7 @@ function rasterBeam({line, activeCycle}) {
   return
 }
 
-function bottomUI ({activeCycle, line}) {
+function bottomUI ({activeCycle, line, ...props}) {
   const col2style = {
     width: '20px',
     'margin-left': '1em'
@@ -177,27 +230,44 @@ function bottomUI ({activeCycle, line}) {
   const contStyle = {
     'font-family': 'C64 Pro Local',
     'letter-spacing':'1px',
-    display: 'flex',
-    'padding-bottom':'1em',
     'justify-content':'center',
-    'background-color':'rgb(177,158,255)',
-    fontSize:'0.8em'
+    display:'flex',
+    'background-color':'rgb(177,158,255)'
   }
-  return h('div', {style: contStyle}, [
-    h('div', ['Clock cycle', h('br'),
-              'Line', h('br')]),
-    h('div', {style: col2style}, [
-      `${activeCycle}`,
-      h('br'),
-      `${line} `
+  return h('div', {style: {
+    'flex-direction':'row',
+    'flex-wrap': 'wrap',
+    ...contStyle
+    }}, [
+    h('div', {style:{
+      'flex-direction':'row', 'font-size':'0.8em',
+      ...contStyle,
+      'padding-bottom':'10px'
+    }}, [
+      h('div', ['Clock cycle', h('br'),
+                'Line', h('br')]),
+      h('div', {style: col2style}, [
+        `${activeCycle}`,
+        h('br'),
+        `${line} `
+      ]),
+      h('div', {style: col3style}, [badline])
     ]),
-    h('div', {style: col3style}, [badline])
+    // controls
+    h('div', {style: {
+      ...contStyle,
+      'padding-bottom':'10px'
+    }}, [
+      h('button', {on: {click:props.onPauseResume}}, !props.paused ? 'pause' : 'resume'),
+      h('button', {on: {click:props.onFastSlow}}, !props.fast ? 'fast' : 'slow'),
+      h('button', {on: {click:props.onStep1}}, 'step 1')
+    ])
   ])
 }
 
 // "monitor" window
 function makeAssembly ({activeCycle, badline, insnIndex, ...props}) {
-  const WIND_W = 130
+  const WIND_W = 140
   const WIND_H = 140
   const wind = h('rect', {attrs:{
     x:0, y:0,
@@ -222,7 +292,7 @@ function makeAssembly ({activeCycle, badline, insnIndex, ...props}) {
       x:3,
       y,
       fill
-    }}, insn.address+':')
+    }}, insn.address+': ')
     const asm = h('text.asm', {attrs: {
       x:80,
       y,
@@ -245,8 +315,36 @@ class TimingDiagram extends VdomDiagram{
       line: ANIM_START_LINE,
       activeCycle: 0,
       insnCycle: 0,
-      insnIndex: 0
+      insnIndex: 0,
+      paused: false,
+      fast: true,
+      tickCount: 0
     }
+
+    this.onPauseResumeClick = this.onPauseResumeClick.bind(this)
+    this.onFastSlowClick = this.onFastSlowClick.bind(this)
+    this.onStep1Click = this.onStep1Click.bind(this)
+  }
+
+  cycleTicks () {
+    return this.state.fast ? 1 : 10
+  }
+
+  onPauseResumeClick() {
+    this.state.paused = !this.state.paused
+    this.render(this.state)
+  }
+
+  onFastSlowClick() {
+    this.state.fast = !this.state.fast
+    this.state.tickCount = this.cycleTicks()
+    this.render(this.state)
+  }
+
+  onStep1Click() {
+    this.state.paused = true
+    this.nextCycle()
+    this.render(this.state)
   }
 
   view (props) {
@@ -270,27 +368,38 @@ class TimingDiagram extends VdomDiagram{
         makeFetchBlocks({...props, badline}),
         rasterBeam(props)
       ]),
-      bottomUI(props)
+      bottomUI({
+        onPauseResume:this.onPauseResumeClick,
+        onFastSlow:this.onFastSlowClick,
+        onStep1:this.onStep1Click,
+        ...props
+      })
     ])
     return view
   }
 
   nextLine () {
-    this.state.insnCycle = 0
-    this.state.insnIndex = 0
     this.state.activeCycle = 0
     this.state.line++
 
-    if (this.state.line >= ANIM_START_LINE+16) {
+    if (this.state.line >= ANIM_START_LINE+2) {
       this.state.line = ANIM_START_LINE
+      this.state.insnCycle = 0
+      this.state.insnIndex = 0
+      return true
     }
+    return false
   }
 
   nextCycle () {
+    let wrap = false
     this.state.activeCycle++
+    if (this.state.activeCycle >= 63) {
+      wrap = this.nextLine()
+    }
 
     // Execute instructions if not "stunned"
-    if (isRunning(isBadLine(this.state.line), this.state.activeCycle)) {
+    if (!wrap && isRunning(isBadLine(this.state.line), this.state.activeCycle)) {
       const curInsn = instructions[this.state.insnIndex]
       this.state.insnCycle++
       if (this.state.insnCycle >= curInsn.timing.length) {
@@ -301,9 +410,6 @@ class TimingDiagram extends VdomDiagram{
         }
       }
     }
-    if (this.state.activeCycle >= 63) {
-      this.nextLine()
-    }
   }
 
   mount (container) {
@@ -311,9 +417,14 @@ class TimingDiagram extends VdomDiagram{
 
     // TODO don't loop the anim.. burns battery on mobile
     setInterval(cb => {
-      this.render(this.state)
-
-      this.nextCycle()
+      if (!this.state.paused) {
+        this.state.tickCount--;
+        if (this.state.tickCount <= 0) {
+          this.nextCycle()
+          this.render(this.state)
+          this.state.tickCount = this.cycleTicks()
+        }
+      }
     }, MS_PER_CYCLE)
   }
 }

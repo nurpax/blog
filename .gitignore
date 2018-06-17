@@ -8,3 +8,5 @@ TAGS
 /.stack-work/
 /nurpax.github.com/
 /blog.sublime-workspace
+.DS_Store
+/node_modules/

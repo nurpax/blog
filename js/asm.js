@@ -10,7 +10,7 @@ function isZeroPage (addr) {
 function parseTiming (insn) {
   let m
   const i = insn.toLowerCase()
-  if (m = /(?:lda|ldx|ldy) \$(.*)/.exec(i)) {
+  if (m = /(?:lda|ldx|ldy) (?:\$|\.)(.*)/.exec(i)) {
     return isZeroPage(m[1]) ? [R, R, R] : [R, R, R, RW]
   }
   if (m = /(?:lda|ldx|ldy) \#/.exec(i)) {
@@ -46,7 +46,7 @@ function parse (str) {
   const lines = str.split('\n')
   const res = []
   const insns = lines.forEach(line => {
-    const re = /\.C:([0-9A-F]+)  ((?:[0-9A-F]+)(?: [0-9A-F]+)*)  [ ]+(.*)/;
+    const re = /\.C:([0-9a-fA-F]+)  ((?:[0-9A-F]+)(?: [0-9A-F]+)*)  [ ]+(.*)/;
     const m = re.exec(line)
     if (m) {
       const asm = m[3]

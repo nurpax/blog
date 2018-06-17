@@ -54,6 +54,30 @@ thumb: /images/bintris/bintris-writer-fld.gif
   50% { transform: translateY(100px); }
   100% { transform: translateY(0px); }
 }
+
+/* GUI items */
+
+button {
+  font-family: 'C64 Pro Local';
+
+  background-color: rgb(105,84,245);
+  border: 2px solid black;
+  color: white;
+  padding: 5px 3px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 12px;
+  outline:none;
+  margin-left: 4px;
+  margin-right: 4px;
+
+  width:80px;
+}
+
+button:focus {
+}
+
 ```
 
 (Looking for the BINTRIS C64 disk image?  Find it [here](/posts/2018-05-21-bintris-on-c64-part-2.html).)
