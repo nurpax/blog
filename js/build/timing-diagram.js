@@ -328,7 +328,7 @@ function bottomUI ({activeCycle, line, ...props}) {
       'padding-bottom':'10px'
     }}, [
       h('button', {on: {click:props.onPauseResume}}, !props.paused ? 'pause' : 'resume'),
-      h('button', {on: {click:props.onFastSlow}}, !props.fast ? 'fast' : 'slow'),
+      h('button', {on: {click:props.onFastSlow}}, !props.fast ? 'faster' : 'slower'),
       h('button', {on: {click:props.onStep1}}, 'step 1')
     ])
   ])
@@ -407,6 +407,7 @@ class TimingDiagram extends VdomDiagram{
   onFastSlowClick() {
     this.state.fast = !this.state.fast
     this.state.tickCount = this.cycleTicks()
+    this.state.paused = false
     this.render(this.state)
   }
 

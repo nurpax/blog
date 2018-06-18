@@ -78,6 +78,10 @@ button {
 button:focus {
 }
 
+button:active {
+  background-color: rgb(80,60,190);
+}
+
 ```
 
 (Looking for the BINTRIS C64 disk image?  Find it [here](/posts/2018-05-21-bintris-on-c64-part-2.html).)
@@ -112,11 +116,10 @@ The VIC scans out the video frame line-by-line.  Each line takes exactly 63 cloc
 
 This might not be a big deal with timing insensitive code.  But since the C64 is all about carefully crafted raster code, bad lines are something you just have to deal with.
 
-To illustrate bad lines, I made this little animation that shows the effect of bad lines.  The little green boxes at the bottom represent the 63 cycles you have for a single line.  The currently executing cycle is highlighted in white.  A white dot over the C64 image is the raster beam.  On normal lines, the CPU runs instructions on every cycle.  But on bad lines, the CPU is stunned (black boxes) and cannot execute instructions.
+To illustrate bad lines, I made this little interactive chart that shows the effect of bad lines.  The little green boxes at the bottom represent the 63 cycles you have for a single line.  The currently executing cycle is highlighted in white.  A white dot over the C64 image is the raster beam.  On normal lines, the CPU runs instructions on every cycle.  But on bad lines, the CPU is stunned (black boxes) and cannot execute instructions.
 
 <div id="cycle-timing-container">
 </div>
-<!-- would be cool to show how asm executes in this plot -->
 
 When do the bad lines occur?  Here's the bad line condition in pseudo code:
 
@@ -225,7 +228,7 @@ To set the the horizontal location of each sprite, we'd need to do this for ever
 }
 ```
 
-That's 32 CPU cycles.  The sprites fall on a few bad lines and on these scanlines there's only 10 cycles to spare.  Sure, it's possible to optimize the sprite x-coordinate stores down to 24 cycles with self-modifying code but 10 cycles is unattainable.
+That's 32 CPU cycles.  The sprites fall on a few bad lines and on these scanlines there's only 10 cycles to spare.  Sure, it's possible to optimize the sprite x-coordinate stores down to 24 cycles with self-modifying code but 10 cycles doesn't seem possible.
 
 Without bad lines, there's 52 cycles (=63-11 to account for 4 sprites) per scanline which is more than enough to move all the four sprites horizontally.
 
