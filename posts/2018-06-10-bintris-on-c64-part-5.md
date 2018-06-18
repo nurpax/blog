@@ -274,14 +274,14 @@ A Bad Line Is 23 Cycles?
 let diagram, fld
 
 $(function () {
-    diagram = new diagrams.TimingDiagram()
-    diagram.mount(document.getElementById("cycle-timing-container"))
+    diagram = new diagrams.TimingDiagram('cycle-timing-container')
+    diagram.mount()
 
-    fld = new diagrams.FldDiagram()
-    fld.mount(document.getElementById("fld-container"))
+    fld = new diagrams.FldDiagram('fld-container')
+    fld.mount()
 
-    warpCrop = new diagrams.LogoWarpCrop()
-    warpCrop.mount(document.getElementById("logo-wobble-closeup-container"))
+    warpCrop = new diagrams.LogoWarpCrop('logo-wobble-closeup-container')
+    warpCrop.mount()
 })
 </script>
 

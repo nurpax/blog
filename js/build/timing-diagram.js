@@ -73,10 +73,12 @@ var patch = snabbdom.init([ // Init patch function with chosen modules
 ]);
 var h = require('snabbdom/h').default; // helper function for creating vnodes
 var asm = require('./asm.js')
+var util = require('./util.js')
 
 class VdomDiagram {
-  constructor () {
+  constructor (divId) {
     this.vnode = null
+    this.selector = `#${divId}`
   }
 
   render (props) {
@@ -376,8 +378,8 @@ function makeAssembly ({activeCycle, badline, insnIndex, ...props}) {
 }
 
 class TimingDiagram extends VdomDiagram{
-  constructor () {
-    super()
+  constructor (selector) {
+    super(selector)
     this.state = {
       line: ANIM_START_LINE,
       activeCycle: 0,
@@ -416,7 +418,7 @@ class TimingDiagram extends VdomDiagram{
 
   view (props) {
     const badline = isBadLine(props.line)
-    var view = h('div', [
+    var view = h(`div${this.selector}`, [
       h('svg', {style:{display:'block'}, attrs: {width: '100%', viewBox: `0 0 ${WIDTH} ${HEIGHT}`}}, [
         h('image', {attrs: {class:'img-pixelated', width:384, height: 272, href:'/images/bintris/c64-basic.png'}}),
         makeCycleBlocks({
@@ -479,12 +481,15 @@ class TimingDiagram extends VdomDiagram{
     }
   }
 
-  mount (container) {
+
+  mount () {
+    const container = document.querySelector(`div${this.selector}`)
     this.vnode = patch(container, this.view(this.state))
 
     // TODO don't loop the anim.. burns battery on mobile
     setInterval(cb => {
-      if (!this.state.paused) {
+      const isInViewport = util.isScrolledIntoView(this.vnode.elm)
+      if (isInViewport && !this.state.paused) {
         this.state.tickCount--;
         if (this.state.tickCount <= 0) {
           this.nextCycle()
@@ -497,8 +502,8 @@ class TimingDiagram extends VdomDiagram{
 }
 
 class FldDiagram extends VdomDiagram{
-  constructor () {
-    super()
+  constructor (selector) {
+    super(selector)
     this.state = {
     }
   }
@@ -510,7 +515,7 @@ class FldDiagram extends VdomDiagram{
     const imgTop = mkimg('c64-fld-top')
     const imgBottom = mkimg('c64-fld-bottom')
     const imgBottomBorder = mkimg('c64-fld-bottom-border')
-    var view = h('div', [
+    var view = h(`div${this.selector}`, [
       h('svg', {style:{display:'block', backgroundColor:'#000'}, attrs: {
         width: '100%', viewBox: `0 0 ${WIDTH} ${HEIGHT}`
       }},
@@ -525,14 +530,15 @@ class FldDiagram extends VdomDiagram{
     return view
   }
 
-  mount (container) {
+  mount () {
+    const container = document.querySelector(`div${this.selector}`)
     this.vnode = patch(container, this.view(this.state))
   }
 }
 
 class LogoWarpCrop extends VdomDiagram{
-  constructor () {
-    super()
+  constructor (selector) {
+    super(selector)
     this.state = {
     }
   }
@@ -541,7 +547,7 @@ class LogoWarpCrop extends VdomDiagram{
     const mkimg = (cls) => {
       return h('image', {attrs: {class:`img-pixelated ${cls}`, width:384, height: 272, href:'/images/bintris/bintris-logo-wobble.gif'}})
     }
-    var view = h('div', [
+    var view = h(`div${this.selector}`, [
       h('svg', {style:{display:'block', backgroundColor:'#000'}, attrs: {
         width: '100%', viewBox: `40 0 ${WIDTH/2.5} ${HEIGHT/2.5}`
       }},
@@ -552,14 +558,30 @@ class LogoWarpCrop extends VdomDiagram{
     return view
   }
 
-  mount (container) {
+  mount () {
+    const container = document.querySelector(`div${this.selector}`)
     this.vnode = patch(container, this.view(this.state))
   }
 }
 
 module.exports = { TimingDiagram, FldDiagram, LogoWarpCrop };
 
-},{"./asm.js":1,"snabbdom":9,"snabbdom/h":3,"snabbdom/modules/attributes":6,"snabbdom/modules/eventlisteners":7,"snabbdom/modules/style":8}],3:[function(require,module,exports){
+},{"./asm.js":1,"./util.js":3,"snabbdom":10,"snabbdom/h":4,"snabbdom/modules/attributes":7,"snabbdom/modules/eventlisteners":8,"snabbdom/modules/style":9}],3:[function(require,module,exports){
+
+function isScrolledIntoView(el) {
+  var rect = el.getBoundingClientRect();
+  if (rect.bottom < 0) {
+    return false
+  }
+  if (rect.top >= window.innerHeight) {
+    return false
+  }
+  return true
+}
+
+module.exports = { isScrolledIntoView }
+
+},{}],4:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var vnode_1 = require("./vnode");
@@ -619,7 +641,7 @@ exports.h = h;
 ;
 exports.default = h;
 
-},{"./is":5,"./vnode":11}],4:[function(require,module,exports){
+},{"./is":6,"./vnode":12}],5:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function createElement(tagName) {
@@ -686,7 +708,7 @@ exports.htmlDomApi = {
 };
 exports.default = exports.htmlDomApi;
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.array = Array.isArray;
@@ -695,7 +717,7 @@ function primitive(s) {
 }
 exports.primitive = primitive;
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var xlinkNS = 'http://www.w3.org/1999/xlink';
@@ -751,7 +773,7 @@ function updateAttrs(oldVnode, vnode) {
 exports.attributesModule = { create: updateAttrs, update: updateAttrs };
 exports.default = exports.attributesModule;
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function invokeHandler(handler, vnode, event) {
@@ -847,7 +869,7 @@ exports.eventListenersModule = {
 };
 exports.default = exports.eventListenersModule;
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var raf = (typeof window !== 'undefined' && window.requestAnimationFrame) || setTimeout;
@@ -934,7 +956,7 @@ exports.styleModule = {
 };
 exports.default = exports.styleModule;
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var vnode_1 = require("./vnode");
@@ -1244,7 +1266,7 @@ function init(modules, domApi) {
 }
 exports.init = init;
 
-},{"./h":3,"./htmldomapi":4,"./is":5,"./thunk":10,"./vnode":11}],10:[function(require,module,exports){
+},{"./h":4,"./htmldomapi":5,"./is":6,"./thunk":11,"./vnode":12}],11:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var h_1 = require("./h");
@@ -1292,7 +1314,7 @@ exports.thunk = function thunk(sel, key, fn, args) {
 };
 exports.default = exports.thunk;
 
-},{"./h":3}],11:[function(require,module,exports){
+},{"./h":4}],12:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function vnode(sel, data, children, text, elm) {

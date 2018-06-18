@@ -6,10 +6,12 @@ var patch = snabbdom.init([ // Init patch function with chosen modules
 ]);
 var h = require('snabbdom/h').default; // helper function for creating vnodes
 var asm = require('./asm.js')
+var util = require('./util.js')
 
 class VdomDiagram {
-  constructor () {
+  constructor (divId) {
     this.vnode = null
+    this.selector = `#${divId}`
   }
 
   render (props) {
@@ -309,8 +311,8 @@ function makeAssembly ({activeCycle, badline, insnIndex, ...props}) {
 }
 
 class TimingDiagram extends VdomDiagram{
-  constructor () {
-    super()
+  constructor (selector) {
+    super(selector)
     this.state = {
       line: ANIM_START_LINE,
       activeCycle: 0,
@@ -349,7 +351,7 @@ class TimingDiagram extends VdomDiagram{
 
   view (props) {
     const badline = isBadLine(props.line)
-    var view = h('div', [
+    var view = h(`div${this.selector}`, [
       h('svg', {style:{display:'block'}, attrs: {width: '100%', viewBox: `0 0 ${WIDTH} ${HEIGHT}`}}, [
         h('image', {attrs: {class:'img-pixelated', width:384, height: 272, href:'/images/bintris/c64-basic.png'}}),
         makeCycleBlocks({
@@ -412,12 +414,15 @@ class TimingDiagram extends VdomDiagram{
     }
   }
 
-  mount (container) {
+
+  mount () {
+    const container = document.querySelector(`div${this.selector}`)
     this.vnode = patch(container, this.view(this.state))
 
     // TODO don't loop the anim.. burns battery on mobile
     setInterval(cb => {
-      if (!this.state.paused) {
+      const isInViewport = util.isScrolledIntoView(this.vnode.elm)
+      if (isInViewport && !this.state.paused) {
         this.state.tickCount--;
         if (this.state.tickCount <= 0) {
           this.nextCycle()
@@ -430,8 +435,8 @@ class TimingDiagram extends VdomDiagram{
 }
 
 class FldDiagram extends VdomDiagram{
-  constructor () {
-    super()
+  constructor (selector) {
+    super(selector)
     this.state = {
     }
   }
@@ -443,7 +448,7 @@ class FldDiagram extends VdomDiagram{
     const imgTop = mkimg('c64-fld-top')
     const imgBottom = mkimg('c64-fld-bottom')
     const imgBottomBorder = mkimg('c64-fld-bottom-border')
-    var view = h('div', [
+    var view = h(`div${this.selector}`, [
       h('svg', {style:{display:'block', backgroundColor:'#000'}, attrs: {
         width: '100%', viewBox: `0 0 ${WIDTH} ${HEIGHT}`
       }},
@@ -458,14 +463,15 @@ class FldDiagram extends VdomDiagram{
     return view
   }
 
-  mount (container) {
+  mount () {
+    const container = document.querySelector(`div${this.selector}`)
     this.vnode = patch(container, this.view(this.state))
   }
 }
 
 class LogoWarpCrop extends VdomDiagram{
-  constructor () {
-    super()
+  constructor (selector) {
+    super(selector)
     this.state = {
     }
   }
@@ -474,7 +480,7 @@ class LogoWarpCrop extends VdomDiagram{
     const mkimg = (cls) => {
       return h('image', {attrs: {class:`img-pixelated ${cls}`, width:384, height: 272, href:'/images/bintris/bintris-logo-wobble.gif'}})
     }
-    var view = h('div', [
+    var view = h(`div${this.selector}`, [
       h('svg', {style:{display:'block', backgroundColor:'#000'}, attrs: {
         width: '100%', viewBox: `40 0 ${WIDTH/2.5} ${HEIGHT/2.5}`
       }},
@@ -485,7 +491,8 @@ class LogoWarpCrop extends VdomDiagram{
     return view
   }
 
-  mount (container) {
+  mount () {
+    const container = document.querySelector(`div${this.selector}`)
     this.vnode = patch(container, this.view(this.state))
   }
 }
