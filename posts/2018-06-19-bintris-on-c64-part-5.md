@@ -1,7 +1,7 @@
 ---
 title: "BINTRIS C64: Bad lines and flexible line distance (series part 5)"
 author: Janne Hellsten
-public: false
+public: true
 series: bintris-c64
 thumb: /images/bintris/bintris-writer-fld.gif
 ---
