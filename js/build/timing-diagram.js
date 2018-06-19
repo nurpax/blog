@@ -1,98 +1,100 @@
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.diagrams = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 
-const R  = 'R'
-const W  = 'W'
-const RW = 'RW'
+const R = 'R';
+const W = 'W';
+const RW = 'RW';
 
-function isZeroPage (addr) {
-  return addr.length === 2
+function isZeroPage(addr) {
+  return addr.length === 2;
 }
 
-function parseTiming (insn) {
-  let m
-  const i = insn.toLowerCase()
+function parseTiming(insn) {
+  var m;
+  const i = insn.toLowerCase();
   if (m = /(?:lda|ldx|ldy) (?:\$|\.)(.*)/.exec(i)) {
-    return isZeroPage(m[1]) ? [R, R, R] : [R, R, R, RW]
+    return isZeroPage(m[1]) ? [R, R, R] : [R, R, R, RW];
   }
   if (m = /(?:lda|ldx|ldy) \#/.exec(i)) {
-    return [R, R]
+    return [R, R];
   }
   if (m = /(?:sta|stx|sty) \$(.*)/.exec(i)) {
-    return isZeroPage(m[1]) ? [R, R, RW] : [R, R, R, RW]
+    return isZeroPage(m[1]) ? [R, R, RW] : [R, R, R, RW];
   }
   if (m = /(?:inc|dec|asl|lsr) \$(.*)/.exec(i)) {
-    return isZeroPage(m[1]) ? [R, R, R, R, W] : [R, R, R, R, R, W]
+    return isZeroPage(m[1]) ? [R, R, R, R, W] : [R, R, R, R, R, W];
   }
   if (m = /bit \$(.*)/.exec(i)) {
-    return isZeroPage(m[1]) ? [R, R, RW] : [R, R, R, RW]
+    return isZeroPage(m[1]) ? [R, R, RW] : [R, R, R, RW];
   }
   if (m = /nop/.exec(i)) {
-    return [R, R]
+    return [R, R];
   }
   if (m = /(?:tax|tay|tsx|txa|txs|tya)/.exec(i)) {
-    return [R, R]
+    return [R, R];
   }
   if (m = /(?:inx|dex|iny|dey)/.exec(i)) {
-    return [R, R]
+    return [R, R];
   }
   if (m = /(?:bne|beq)/.exec(i)) {
     // TODO this is not static.  It's 2 if no branch taken, 3 if taken
-    return [R, R, R]
+    return [R, R, R];
   }
 
-  console.warn('unsupported instruction', insn)
+  console.warn('unsupported instruction', insn);
 }
 
-function parse (str) {
-  const lines = str.split('\n')
-  const res = []
+function parse(str) {
+  const lines = str.split('\n');
+  const res = [];
   const insns = lines.forEach(line => {
     const re = /\.C:([0-9a-fA-F]+)  ((?:[0-9A-F]+)(?: [0-9A-F]+)*)  [ ]+(.*)/;
-    const m = re.exec(line)
+    const m = re.exec(line);
     if (m) {
-      const asm = m[3]
+      const asm = m[3];
       res.push({
         address: m[1],
         encoded: m[2],
         asm,
         timing: parseTiming(asm)
-      })
+      });
     }
-  })
-  return res
+  });
+  return res;
 }
 
 module.exports = { parse, R, W, RW };
 
 },{}],2:[function(require,module,exports){
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
+
 var snabbdom = require('snabbdom');
-var patch = snabbdom.init([ // Init patch function with chosen modules
-  require('snabbdom/modules/attributes').default, // makes it easy to toggle classes
-  require('snabbdom/modules/style').default,
-  require('snabbdom/modules/eventlisteners').default
-]);
+var patch = snabbdom.init([// Init patch function with chosen modules
+require('snabbdom/modules/attributes').default, // makes it easy to toggle classes
+require('snabbdom/modules/style').default, require('snabbdom/modules/eventlisteners').default]);
 var h = require('snabbdom/h').default; // helper function for creating vnodes
-var asm = require('./asm.js')
-var util = require('./util.js')
+var asm = require('./asm.js');
+var util = require('./util.js');
 
 class VdomDiagram {
-  constructor (divId) {
-    this.vnode = null
-    this.selector = `#${divId}`
+  constructor(divId) {
+    this.vnode = null;
+    this.selector = `#${divId}`;
   }
 
-  render (props) {
-    this.vnode = patch(this.vnode, this.view(props))
+  render(props) {
+    this.vnode = patch(this.vnode, this.view(props));
   }
 }
 
-const MS_PER_CYCLE = 100
+const MS_PER_CYCLE = 100;
 
-const YSCROLL = 3
-const WIDTH = 384
-const HEIGHT = 272
+const YSCROLL = 3;
+const WIDTH = 384;
+const HEIGHT = 272;
 
-const ANIM_START_LINE = 59
+const ANIM_START_LINE = 59;
 
 // starts on raster line 59 (badline)
 const raster_badline_str = `
@@ -103,7 +105,7 @@ const raster_badline_str = `
 .C:11f2  EA          NOP
 .C:11f3  A2 06       LDX #$06
 .C:11f5  BD 00 2A    LDA .colors,X
-`
+`;
 
 const raster_normal_str = `
 .C:11f8  8D 20 D0    STA $D020
@@ -134,9 +136,9 @@ const raster_normal_str = `
 .C:1215  24 FE       BIT $FE
 .C:1217  A2 07       LDX #$07
 .C:1219  BD 00 2A    LDA .colors,X
-`
+`;
 
-let instructions = asm.parse(raster_badline_str + raster_normal_str)
+let instructions = asm.parse(raster_badline_str + raster_normal_str);
 
 /*
 const instructions_str = `
@@ -187,199 +189,186 @@ const instructions_str = `
 `
 */
 
-
 // Covert a pixel position in the VICE screenshot resolution to actual C64 Y position
 function pixYtoC64(y) {
-  return y-35 + 51
+  return y - 35 + 51;
 }
 
 function c64YtoPix(y) {
-  return y-51 + 35
+  return y - 51 + 35;
 }
 
 function isBadLine(line) {
-  return (line >= 0x30 && line <= 0xf7) && (line & 7) == YSCROLL
+  return line >= 0x30 && line <= 0xf7 && (line & 7) == YSCROLL;
 }
 
 function translate(x, y) {
-  return `translate(${x}, ${y})`
+  return `translate(${x}, ${y})`;
 }
 
 function isRunning(badline, cycle) {
-  return badline ? (cycle <= 10) || (cycle >= 54) : true
+  return badline ? cycle <= 10 || cycle >= 54 : true;
 }
 
-function makeCycleBlocks ({activeCycle, badline, ...props}) {
-  let res = []
-  const BW = 5
-  const BH = 5
+function makeCycleBlocks(_ref) {
+  let { activeCycle, badline } = _ref,
+      props = _objectWithoutProperties(_ref, ['activeCycle', 'badline']);
+
+  let res = [];
+  const BW = 5;
+  const BH = 5;
   for (var i = 0; i < 63; i++) {
-    const x = BW * i
-    const y = 0
-    const executing = isRunning(badline, i)
-    let fill = activeCycle == i ? '#fff' : '#2e2'
+    const x = BW * i;
+    const y = 0;
+    const executing = isRunning(badline, i);
+    let fill = activeCycle == i ? '#fff' : '#2e2';
     if (!executing) {
-      fill = '#000'
+      fill = '#000';
     }
     const attrs = {
       fill,
-      width: BW-1,
-      height: BH-1,
+      width: BW - 1,
+      height: BH - 1,
       x, y
-    }
-    const block = h('rect', {attrs})
-    res.push(block)
+    };
+    const block = h('rect', { attrs });
+    res.push(block);
   }
-  res.push(h('text.status', {attrs:{
-    x:activeCycle*BW,
-    y:BH+10
-  }}, isRunning(badline, activeCycle) ? `cycle ${activeCycle}` : 'stunned'))
-  res.push(h('rect', {attrs:{
-    x:activeCycle*BW+1+0.5,
-    y:BH+1,
-    width:1,
-    height:4,
-    fill: '#000'
-  }}, isRunning(badline, activeCycle) ? `cycle ${activeCycle}` : 'stunned'))
-  return h('g', { attrs: {transform:translate(props.x, props.y)}}, res)
+  res.push(h('text.status', { attrs: {
+      x: activeCycle * BW,
+      y: BH + 10
+    } }, isRunning(badline, activeCycle) ? `cycle ${activeCycle}` : 'stunned'));
+  res.push(h('rect', { attrs: {
+      x: activeCycle * BW + 1 + 0.5,
+      y: BH + 1,
+      width: 1,
+      height: 4,
+      fill: '#000'
+    } }, isRunning(badline, activeCycle) ? `cycle ${activeCycle}` : 'stunned'));
+  return h('g', { attrs: { transform: translate(props.x, props.y) } }, res);
 }
 
 function cycleToXPos(activeCycle) {
-  return ((activeCycle - 12) * 8) + 32 - 0x18
+  return (activeCycle - 12) * 8 + 32 - 0x18;
 }
 
-function makeFetchBlocks ({activeCycle, badline, line}) {
-  const y = c64YtoPix(((line-YSCROLL) & ~7) + YSCROLL)
-  const rects = [
-    h('rect', {attrs:{
-      x:0,
+function makeFetchBlocks({ activeCycle, badline, line }) {
+  const y = c64YtoPix((line - YSCROLL & ~7) + YSCROLL);
+  const rects = [h('rect', { attrs: {
+      x: 0,
       y,
-      width:WIDTH,
-      height:8,
+      width: WIDTH,
+      height: 8,
       fill: badline ? '#f00' : '#0f0',
-      opacity:0.2
-    }})
-  ]
-  return h('g', rects)
+      opacity: 0.2
+    } })];
+  return h('g', rects);
 }
 
-function rasterBeam({line, activeCycle, fast}) {
+function rasterBeam({ line, activeCycle, fast }) {
   // raster hits visible screen area at cycle 12
-  const x = cycleToXPos(activeCycle)
+  const x = cycleToXPos(activeCycle);
   // Reset CSS anim on scanline start
-  const animClass = (activeCycle == 0 || !fast) ? "" : ".move-beam"
-  return h('g', [
-    h(`rect${animClass}`, {attrs: {
+  const animClass = activeCycle == 0 || !fast ? "" : ".move-beam";
+  return h('g', [h(`rect${animClass}`, { attrs: {
       fill: '#fff',
       width: 2,
       height: 2,
-      transform:translate(x-0.5, -0.5),
-      x:0,
+      transform: translate(x - 0.5, -0.5),
+      x: 0,
       y: c64YtoPix(line)
-    }})
-  ])
-  return
+    } })]);
+  return;
 }
 
-function bottomUI ({activeCycle, line, ...props}) {
+function bottomUI(_ref2) {
+  let { activeCycle, line } = _ref2,
+      props = _objectWithoutProperties(_ref2, ['activeCycle', 'line']);
+
   const col2style = {
     width: '20px',
     'margin-left': '1em'
-  }
+  };
   const col3style = {
     'margin-left': '1.5em',
     'align-self': 'center',
-    'min-width':'8.0em',
-    fontSize:'1.1em'
-  }
-  let badline = ''
+    'min-width': '8.0em',
+    fontSize: '1.1em'
+  };
+  let badline = '';
   if (isBadLine(line)) {
-    badline = h('span', {style: {fontSize:'1.0em', color:'#f00'}}, 'BAD LINE')
+    badline = h('span', { style: { fontSize: '1.0em', color: '#f00' } }, 'BAD LINE');
   }
   const contStyle = {
     'font-family': 'C64 Pro Local',
-    'letter-spacing':'1px',
-    'justify-content':'center',
-    display:'flex',
-    'background-color':'rgb(177,158,255)'
-  }
-  return h('div', {style: {
-    'flex-direction':'row',
-    'flex-wrap': 'wrap',
-    ...contStyle
-    }}, [
-    h('div', {style:{
-      'flex-direction':'row', 'font-size':'0.8em',
-      ...contStyle,
-      'padding-bottom':'10px'
-    }}, [
-      h('div', ['Clock cycle', h('br'),
-                'Line', h('br')]),
-      h('div', {style: col2style}, [
-        `${activeCycle}`,
-        h('br'),
-        `${line} `
-      ]),
-      h('div', {style: col3style}, [badline])
-    ]),
-    // controls
-    h('div', {style: {
-      ...contStyle,
-      'padding-bottom':'10px'
-    }}, [
-      h('button', {on: {click:props.onPauseResume}}, !props.paused ? 'pause' : 'resume'),
-      h('button', {on: {click:props.onFastSlow}}, !props.fast ? 'faster' : 'slower'),
-      h('button', {on: {click:props.onStep1}}, 'step 1')
-    ])
-  ])
+    'letter-spacing': '1px',
+    'justify-content': 'center',
+    display: 'flex',
+    'background-color': 'rgb(177,158,255)'
+  };
+  return h('div', { style: _extends({
+      'flex-direction': 'row',
+      'flex-wrap': 'wrap'
+    }, contStyle) }, [h('div', { style: _extends({
+      'flex-direction': 'row', 'font-size': '0.8em'
+    }, contStyle, {
+      'padding-bottom': '10px'
+    }) }, [h('div', ['Clock cycle', h('br'), 'Line', h('br')]), h('div', { style: col2style }, [`${activeCycle}`, h('br'), `${line} `]), h('div', { style: col3style }, [badline])]),
+  // controls
+  h('div', { style: _extends({}, contStyle, {
+      'padding-bottom': '10px'
+    }) }, [h('button', { on: { click: props.onPauseResume } }, !props.paused ? 'pause' : 'resume'), h('button', { on: { click: props.onFastSlow } }, !props.fast ? 'faster' : 'slower'), h('button', { on: { click: props.onStep1 } }, 'step 1')])]);
 }
 
 // "monitor" window
-function makeAssembly ({activeCycle, badline, insnIndex, ...props}) {
-  const WIND_W = 140
-  const WIND_H = 140
-  const wind = h('rect', {attrs:{
-    x:0, y:0,
-    width:WIND_W,
-    height:WIND_H,
-    fill: '#000',
-    opacity: 0.7,
-    'stroke-width':'1px',
-    stroke: '#fff'
-  }})
-  const ni = 8
-  const min = insnIndex - ni < 0 ? 0 : insnIndex - ni
-  let max = min + 2*ni
+function makeAssembly(_ref3) {
+  let { activeCycle, badline, insnIndex } = _ref3,
+      props = _objectWithoutProperties(_ref3, ['activeCycle', 'badline', 'insnIndex']);
+
+  const WIND_W = 140;
+  const WIND_H = 140;
+  const wind = h('rect', { attrs: {
+      x: 0, y: 0,
+      width: WIND_W,
+      height: WIND_H,
+      fill: '#000',
+      opacity: 0.7,
+      'stroke-width': '1px',
+      stroke: '#fff'
+    } });
+  const ni = 8;
+  const min = insnIndex - ni < 0 ? 0 : insnIndex - ni;
+  let max = min + 2 * ni;
   if (max >= instructions.length) {
-    max = instructions.length
+    max = instructions.length;
   }
-  const insns = instructions.slice(min, max)
-  const ins = insns.map((insn,idx) => {
-    const y = 10 + idx*8
-    const fill = insnIndex == min+idx ? '#fff' : '#aaa'
-    const addr = h('text.asm', {attrs: {
-      x:3,
-      y,
-      fill
-    }}, insn.address+': ')
-    const asm = h('text.asm', {attrs: {
-      x:80,
-      y,
-      fill
-    }}, insn.asm)
-    const enc = h('text.asm', {attrs: {
-      x:28,
-      y,
-      fill
-    }}, insn.encoded)
-    return h('g', [addr, asm, enc])
-  })
-  return h('g', { attrs: {transform:translate(props.x, props.y)}}, [wind, ...ins])
+  const insns = instructions.slice(min, max);
+  const ins = insns.map((insn, idx) => {
+    const y = 10 + idx * 8;
+    const fill = insnIndex == min + idx ? '#fff' : '#aaa';
+    const addr = h('text.asm', { attrs: {
+        x: 3,
+        y,
+        fill
+      } }, insn.address + ': ');
+    const asm = h('text.asm', { attrs: {
+        x: 80,
+        y,
+        fill
+      } }, insn.asm);
+    const enc = h('text.asm', { attrs: {
+        x: 28,
+        y,
+        fill
+      } }, insn.encoded);
+    return h('g', [addr, asm, enc]);
+  });
+  return h('g', { attrs: { transform: translate(props.x, props.y) } }, [wind, ...ins]);
 }
 
-class TimingDiagram extends VdomDiagram{
-  constructor (selector) {
-    super(selector)
+class TimingDiagram extends VdomDiagram {
+  constructor(selector) {
+    super(selector);
     this.state = {
       line: ANIM_START_LINE,
       activeCycle: 0,
@@ -388,180 +377,153 @@ class TimingDiagram extends VdomDiagram{
       paused: false,
       fast: true,
       tickCount: 0
-    }
+    };
 
-    this.onPauseResumeClick = this.onPauseResumeClick.bind(this)
-    this.onFastSlowClick = this.onFastSlowClick.bind(this)
-    this.onStep1Click = this.onStep1Click.bind(this)
+    this.onPauseResumeClick = this.onPauseResumeClick.bind(this);
+    this.onFastSlowClick = this.onFastSlowClick.bind(this);
+    this.onStep1Click = this.onStep1Click.bind(this);
   }
 
-  cycleTicks () {
-    return this.state.fast ? 1 : 10
+  cycleTicks() {
+    return this.state.fast ? 1 : 10;
   }
 
   onPauseResumeClick() {
-    this.state.paused = !this.state.paused
-    this.render(this.state)
+    this.state.paused = !this.state.paused;
+    this.render(this.state);
   }
 
   onFastSlowClick() {
-    this.state.fast = !this.state.fast
-    this.state.tickCount = this.cycleTicks()
-    this.state.paused = false
-    this.render(this.state)
+    this.state.fast = !this.state.fast;
+    this.state.tickCount = this.cycleTicks();
+    this.state.paused = false;
+    this.render(this.state);
   }
 
   onStep1Click() {
-    this.state.paused = true
-    this.nextCycle()
-    this.render(this.state)
+    this.state.paused = true;
+    this.nextCycle();
+    this.render(this.state);
   }
 
-  view (props) {
-    const badline = isBadLine(props.line)
-    var view = h(`div${this.selector}`, [
-      h('svg', {style:{display:'block'}, attrs: {width: '100%', viewBox: `0 0 ${WIDTH} ${HEIGHT}`}}, [
-        h('image', {attrs: {class:'img-pixelated', width:384, height: 272, href:'/images/bintris/c64-basic.png'}}),
-        makeCycleBlocks({
-          x: 34,
-          y: 240,
-          badline,
-          activeCycle: props.activeCycle
-        }),
-        makeAssembly({
-          x:240,
-          y:80,
-          badline,
-          insnIndex: props.insnIndex,
-          activeCycle: props.activeCycle
-        }),
-        makeFetchBlocks({...props, badline}),
-        rasterBeam(props)
-      ]),
-      bottomUI({
-        onPauseResume:this.onPauseResumeClick,
-        onFastSlow:this.onFastSlowClick,
-        onStep1:this.onStep1Click,
-        ...props
-      })
-    ])
-    return view
+  view(props) {
+    const badline = isBadLine(props.line);
+    var view = h(`div${this.selector}`, [h('svg', { style: { display: 'block' }, attrs: { width: '100%', viewBox: `0 0 ${WIDTH} ${HEIGHT}` } }, [h('image', { attrs: { class: 'img-pixelated', width: 384, height: 272, href: '/images/bintris/c64-basic.png' } }), makeCycleBlocks({
+      x: 34,
+      y: 240,
+      badline,
+      activeCycle: props.activeCycle
+    }), makeAssembly({
+      x: 240,
+      y: 80,
+      badline,
+      insnIndex: props.insnIndex,
+      activeCycle: props.activeCycle
+    }), makeFetchBlocks(_extends({}, props, { badline })), rasterBeam(props)]), bottomUI(_extends({
+      onPauseResume: this.onPauseResumeClick,
+      onFastSlow: this.onFastSlowClick,
+      onStep1: this.onStep1Click
+    }, props))]);
+    return view;
   }
 
-  nextLine () {
-    this.state.activeCycle = 0
-    this.state.line++
+  nextLine() {
+    this.state.activeCycle = 0;
+    this.state.line++;
 
-    if (this.state.line >= ANIM_START_LINE+2) {
-      this.state.line = ANIM_START_LINE
-      this.state.insnCycle = 0
-      this.state.insnIndex = 0
-      return true
+    if (this.state.line >= ANIM_START_LINE + 2) {
+      this.state.line = ANIM_START_LINE;
+      this.state.insnCycle = 0;
+      this.state.insnIndex = 0;
+      return true;
     }
-    return false
+    return false;
   }
 
-  nextCycle () {
-    let wrap = false
-    this.state.activeCycle++
+  nextCycle() {
+    let wrap = false;
+    this.state.activeCycle++;
     if (this.state.activeCycle >= 63) {
-      wrap = this.nextLine()
+      wrap = this.nextLine();
     }
 
     // Execute instructions if not "stunned"
     if (!wrap && isRunning(isBadLine(this.state.line), this.state.activeCycle)) {
-      const curInsn = instructions[this.state.insnIndex]
-      this.state.insnCycle++
+      const curInsn = instructions[this.state.insnIndex];
+      this.state.insnCycle++;
       if (this.state.insnCycle >= curInsn.timing.length) {
-        this.state.insnCycle = 0
-        this.state.insnIndex++
+        this.state.insnCycle = 0;
+        this.state.insnIndex++;
         if (this.state.insnIndex >= instructions.length) {
-          console.error('insnIndex wrap around, shouldn\'t happen')
+          console.error('insnIndex wrap around, shouldn\'t happen');
         }
       }
     }
   }
 
-
-  mount () {
-    const container = document.querySelector(`div${this.selector}`)
-    this.vnode = patch(container, this.view(this.state))
+  mount() {
+    const container = document.querySelector(`div${this.selector}`);
+    this.vnode = patch(container, this.view(this.state));
 
     // TODO don't loop the anim.. burns battery on mobile
     setInterval(cb => {
-      const isInViewport = util.isScrolledIntoView(this.vnode.elm)
+      const isInViewport = util.isScrolledIntoView(this.vnode.elm);
       if (isInViewport && !this.state.paused) {
         this.state.tickCount--;
         if (this.state.tickCount <= 0) {
-          this.nextCycle()
-          this.render(this.state)
-          this.state.tickCount = this.cycleTicks()
+          this.nextCycle();
+          this.render(this.state);
+          this.state.tickCount = this.cycleTicks();
         }
       }
-    }, MS_PER_CYCLE)
+    }, MS_PER_CYCLE);
   }
 }
 
-class FldDiagram extends VdomDiagram{
-  constructor (selector) {
-    super(selector)
-    this.state = {
-    }
+class FldDiagram extends VdomDiagram {
+  constructor(selector) {
+    super(selector);
+    this.state = {};
   }
 
-  view (props) {
-    const mkimg = (cls) => {
-      return h('image', {attrs: {class:`img-pixelated ${cls}`, width:384, height: 272, href:'/images/bintris/c64-basic.png'}})
-    }
-    const imgTop = mkimg('c64-fld-top')
-    const imgBottom = mkimg('c64-fld-bottom')
-    const imgBottomBorder = mkimg('c64-fld-bottom-border')
-    var view = h(`div${this.selector}`, [
-      h('svg', {style:{display:'block', backgroundColor:'#000'}, attrs: {
+  view(props) {
+    const mkimg = cls => {
+      return h('image', { attrs: { class: `img-pixelated ${cls}`, width: 384, height: 272, href: '/images/bintris/c64-basic.png' } });
+    };
+    const imgTop = mkimg('c64-fld-top');
+    const imgBottom = mkimg('c64-fld-bottom');
+    const imgBottomBorder = mkimg('c64-fld-bottom-border');
+    var view = h(`div${this.selector}`, [h('svg', { style: { display: 'block', backgroundColor: '#000' }, attrs: {
         width: '100%', viewBox: `0 0 ${WIDTH} ${HEIGHT}`
-      }},
-      [
-        imgTop,
-        imgBottom,
-        imgBottomBorder,
-        h('rect', {attrs:{x:0,y:0,width:32, height:HEIGHT, fill:'rgb(177,158,255)'}}),
-        h('rect', {attrs:{x:WIDTH-32,y:0,width:32, height:HEIGHT, fill:'rgb(177,158,255)'}})
-      ])
-    ])
-    return view
+      } }, [imgTop, imgBottom, imgBottomBorder, h('rect', { attrs: { x: 0, y: 0, width: 32, height: HEIGHT, fill: 'rgb(177,158,255)' } }), h('rect', { attrs: { x: WIDTH - 32, y: 0, width: 32, height: HEIGHT, fill: 'rgb(177,158,255)' } })])]);
+    return view;
   }
 
-  mount () {
-    const container = document.querySelector(`div${this.selector}`)
-    this.vnode = patch(container, this.view(this.state))
+  mount() {
+    const container = document.querySelector(`div${this.selector}`);
+    this.vnode = patch(container, this.view(this.state));
   }
 }
 
-class LogoWarpCrop extends VdomDiagram{
-  constructor (selector) {
-    super(selector)
-    this.state = {
-    }
+class LogoWarpCrop extends VdomDiagram {
+  constructor(selector) {
+    super(selector);
+    this.state = {};
   }
 
-  view (props) {
-    const mkimg = (cls) => {
-      return h('image', {attrs: {class:`img-pixelated ${cls}`, width:384, height: 272, href:'/images/bintris/bintris-logo-wobble.gif'}})
-    }
-    var view = h(`div${this.selector}`, [
-      h('svg', {style:{display:'block', backgroundColor:'#000'}, attrs: {
-        width: '100%', viewBox: `40 0 ${WIDTH/2.5} ${HEIGHT/2.5}`
-      }},
-      [
-        mkimg('logo-warp-crop')
-      ])
-    ])
-    return view
+  view(props) {
+    const mkimg = cls => {
+      return h('image', { attrs: { class: `img-pixelated ${cls}`, width: 384, height: 272, href: '/images/bintris/bintris-logo-wobble.gif' } });
+    };
+    var view = h(`div${this.selector}`, [h('svg', { style: { display: 'block', backgroundColor: '#000' }, attrs: {
+        width: '100%', viewBox: `40 0 ${WIDTH / 2.5} ${HEIGHT / 2.5}`
+      } }, [mkimg('logo-warp-crop')])]);
+    return view;
   }
 
-  mount () {
-    const container = document.querySelector(`div${this.selector}`)
-    this.vnode = patch(container, this.view(this.state))
+  mount() {
+    const container = document.querySelector(`div${this.selector}`);
+    this.vnode = patch(container, this.view(this.state));
   }
 }
 
@@ -572,15 +534,15 @@ module.exports = { TimingDiagram, FldDiagram, LogoWarpCrop };
 function isScrolledIntoView(el) {
   var rect = el.getBoundingClientRect();
   if (rect.bottom < 0) {
-    return false
+    return false;
   }
   if (rect.top >= window.innerHeight) {
-    return false
+    return false;
   }
-  return true
+  return true;
 }
 
-module.exports = { isScrolledIntoView }
+module.exports = { isScrolledIntoView };
 
 },{}],4:[function(require,module,exports){
 "use strict";

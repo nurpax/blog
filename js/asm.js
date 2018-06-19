@@ -8,7 +8,7 @@ function isZeroPage (addr) {
 }
 
 function parseTiming (insn) {
-  let m
+  var m;
   const i = insn.toLowerCase()
   if (m = /(?:lda|ldx|ldy) (?:\$|\.)(.*)/.exec(i)) {
     return isZeroPage(m[1]) ? [R, R, R] : [R, R, R, RW]

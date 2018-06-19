@@ -270,17 +270,17 @@ If you're interested in playing with the sprite warp, I pushed its [standalone s
 <img class="img-medium-wide" src="/images/bintris/sprite-wobble-standalone.png"/>
 
 <script type="text/javascript">
-let diagram, fld
+var diagram, fld;
 
 $(function () {
-    diagram = new diagrams.TimingDiagram('cycle-timing-container')
-    diagram.mount()
+    diagram = new diagrams.TimingDiagram('cycle-timing-container');
+    diagram.mount();
 
-    fld = new diagrams.FldDiagram('fld-container')
-    fld.mount()
+    fld = new diagrams.FldDiagram('fld-container');
+    fld.mount();
 
-    warpCrop = new diagrams.LogoWarpCrop('logo-wobble-closeup-container')
-    warpCrop.mount()
+    warpCrop = new diagrams.LogoWarpCrop('logo-wobble-closeup-container');
+    warpCrop.mount();
 })
 </script>
 
