@@ -1,5 +1,5 @@
 ---
-title: BINTRIS C64 flexible line distance and logo warp (series part 5)
+title: "BINTRIS C64: Bad lines and flexible line distance (series part 5)"
 author: Janne Hellsten
 public: false
 series: bintris-c64
@@ -86,12 +86,10 @@ button:active {
 
 (Looking for the BINTRIS C64 disk image?  Find it [here](/posts/2018-05-21-bintris-on-c64-part-2.html).)
 
-TODO introduce the BINTRIS blog series.
-
 Introduction
 ------------
 
-This post discusses how BINTRIS uses a technique called the flexible line distance (FLD) to implement full-screen vertical scrolling and suppress Bad Lines when warping the BINTRIS logo.
+This post discusses how BINTRIS uses YSCROLL manipulation to implement bad line suppression and full-screen vertical scrolling (flexible line distance, or FLD).
 
 Here are the effects in action:
 
@@ -133,9 +131,9 @@ When do the bad lines occur?  Here's the bad line condition in pseudo code:
 
 where RASTER is the current scanline register (`$d011`/`$d012`) and YSCROLL is the vertical scroll register (bits 0-2 of `$d011`).  (See the [C64 memory map][memmap] for details on these registers.)
 
-Notice how the bad line condition depends on the YSCROLL register.  Turns out, you can suppress or delay bad lines by manipulating the YSCROLL value at the right time.  Recall the `(RASTER&7)==YSCROLL` condition.  If, at the beginning of a line, you set the YSCROLL to a value that doesn't the lowest 3 bits of the current line, the bad line will not occur.  On such lines, VIC has nothing to render (as we just tricked it to not fetch character codes) and it will render the last byte of the video memory instead (e.g., contents of `$3fff`)
+Notice how the bad line condition depends on the YSCROLL register.  Turns out, you can suppress or delay bad lines by manipulating the YSCROLL value at the right time.  Recall the `(RASTER&7)==YSCROLL` condition.  If, at the beginning of a line, you set the YSCROLL to a value that doesn't match the lowest 3 bits of the current line, the bad line will not happen.  On such lines, VIC has nothing to render (as we just tricked it to not fetch character codes) and it will render the last byte of the video memory instead (e.g., contents of `$3fff`)
 
-Read further to see what we can do with this technique.
+Let's see what we can do with this technique.
 
 Flexible Line Distance (FLD)
 ----------------------------
@@ -178,14 +176,14 @@ for (int i = 0; i < num_fld_lines; i++) {
 }
 ```
 
-I found [working FLD code in 6502 assembly FLD](http://codebase64.org/doku.php?id=base:fld) from codebase64.org.  I tested it by porting it to KickAssembler and running it on VICE.
+I found [working FLD code in 6502 assembly](http://codebase64.org/doku.php?id=base:fld) from codebase64.org.  I tested it by porting it to KickAssembler and running it on VICE.
 
 Skipping Bad Lines
 ------------------
 
-As discussed above, it's possible to vertically scroll down the whole screen by manipulating the YSCROLL register at appropriate times.  But skipping bad lines can be useful for other reasons too.  Recall from the Bad Lines section that on a bad line, the CPU can run only 20-23 cycles worth of machine code. _(NB: although many tutorials say that you have 23 CPU cycles on a bad line, in practice you really only have 20-22 cycles to work with.  I will expand on this later in the article.)_
+As discussed above, it's possible to vertically scroll down the whole screen by manipulating the YSCROLL register at appropriate times.  However, vertical scrolling is not the only reason why you might want to skip bad lines.  Recall from the Bad Lines section that on a bad line, the CPU can run only 20-23 cycles worth of machine code. _(NB: although many tutorials say that you have 23 CPU cycles on a bad line, in practice you really only have 20-22 cycles to work with.  I might write a separate article about this topic later on.)_
 
-The situation gets even worse if there are any sprites on a bad line.  And the more sprites you have, the fewer CPU cycles you have.  Here's a simplified formula for evaluating how many cycles you can spend on a bad line with sprites:
+The situation gets even worse if there are any sprites on a bad line.  Also, the more sprites you have, the fewer CPU cycles are available.  Here's a simplified formula for evaluating how many cycles you can spend on a bad line with sprites:
 
 $num\_cycles = 23 - (3 + 2*num\_sprites)$
 
@@ -193,7 +191,7 @@ _(NB: This is a bit simplified, see [Missing Cycles](http://www.antimon.org/dl/c
 
 Let's say you have enabled sprites 0-3 and they all hit a bad line.  Now you have only 12 cycles to spare on your fancy raster routine (or in practice, more like 10 cycles.)
 
-Ten cycles is not a whole lot.  For example, say you want to load and store some values.  Here's all you can run per scanline:
+Ten cycles is not a much.  For example, say you want to load and store some values.  Here's all you can run during a single bad line:
 
 ```
 LDA abs_addr        (4 cycles)
@@ -228,13 +226,13 @@ To set the the horizontal location of each sprite, we'd need to do this for ever
 }
 ```
 
-That's 32 CPU cycles.  The sprites fall on a few bad lines and on these scanlines there's only 10 cycles to spare.  Sure, it's possible to optimize the sprite x-coordinate stores down to 24 cycles with self-modifying code but 10 cycles doesn't seem possible.
+That's 32 CPU cycles per line.  The sprites fall on a few bad lines and on these scanlines there's only 10 cycles to spare.  Sure, it's possible to optimize the sprite x-coordinate stores down to 24 cycles with self-modifying code but 10 cycles doesn't seem possible.
 
 Without bad lines, there's 52 cycles (=63-11 to account for 4 sprites) per scanline which is more than enough to move all the four sprites horizontally.
 
 If only there were no bad lines..
 
-You guessed it, right?  If bad lines are suppressed for the duration of the logo, there will be plenty of cycles to move the sprites.  Suppressing bad lines can be done the by manipulating the YSCROLL register the same way as with FLD:
+You guessed it, right?  If bad lines are suppressed for the duration of the logo, there will be plenty of cycles to move the sprites.  Bad line suppression can be done by manipulating the YSCROLL register just as we did with FLD:
 
 ```
 
@@ -267,11 +265,9 @@ You guessed it, right?  If bad lines are suppressed for the duration of the logo
 }
 ```
 
-<!-- TODO standalone code w/ sine wave + some gfx -->
-<!-- ask on twitter about gfx? -->
+If you're interested in playing with the sprite warp, I pushed its [standalone source code up on github](https://github.com/nurpax/c64-samples/tree/master/sprite_warp).  Here's how it looks like:
 
-A Bad Line Is 23 Cycles?
-------------------------
+<img class="img-medium-wide" src="/images/bintris/sprite-wobble-standalone.png"/>
 
 <script type="text/javascript">
 let diagram, fld
@@ -292,7 +288,7 @@ $(function () {
 Next in series
 --------------
 
-TBD
+My next BINTRIS post will wrap up the article series.
 
 [fld]: http://www.zimmers.net/cbmpics/cbm/c64/vic-ii.txt
 [bintris]: http://nurpax.com/bintris
