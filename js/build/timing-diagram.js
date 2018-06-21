@@ -408,7 +408,7 @@ class TimingDiagram extends VdomDiagram {
 
   view(props) {
     const badline = isBadLine(props.line);
-    var view = h(`div${this.selector}`, [h('svg', { style: { display: 'block' }, attrs: { width: '100%', viewBox: `0 0 ${WIDTH} ${HEIGHT}` } }, [h('image', { attrs: { class: 'img-pixelated', width: 384, height: 272, href: '/images/bintris/c64-basic.png' } }), makeCycleBlocks({
+    var view = h(`div${this.selector}`, [h('svg', { style: { display: 'block' }, attrs: { width: '100%', viewBox: `0 0 ${WIDTH} ${HEIGHT}` } }, [h('image', { attrs: { class: 'img-pixelated', width: 384, height: 272, 'xlink:href': '/images/bintris/c64-basic.png' } }), makeCycleBlocks({
       x: 34,
       y: 240,
       badline,
@@ -488,7 +488,7 @@ class FldDiagram extends VdomDiagram {
 
   view(props) {
     const mkimg = cls => {
-      return h('image', { attrs: { class: `img-pixelated ${cls}`, width: 384, height: 272, href: '/images/bintris/c64-basic.png' } });
+      return h('image', { attrs: { class: `img-pixelated ${cls}`, width: 384, height: 272, 'xlink:href': '/images/bintris/c64-basic.png' } });
     };
     const imgTop = mkimg('c64-fld-top');
     const imgBottom = mkimg('c64-fld-bottom');
@@ -513,7 +513,7 @@ class LogoWarpCrop extends VdomDiagram {
 
   view(props) {
     const mkimg = cls => {
-      return h('image', { attrs: { class: `img-pixelated ${cls}`, width: 384, height: 272, href: '/images/bintris/bintris-logo-wobble.gif' } });
+      return h('image', { attrs: { class: `img-pixelated ${cls}`, width: 384, height: 272, 'xlink:href': '/images/bintris/bintris-logo-wobble.gif' } });
     };
     var view = h(`div${this.selector}`, [h('svg', { style: { display: 'block', backgroundColor: '#000' }, attrs: {
         width: '100%', viewBox: `40 0 ${WIDTH / 2.5} ${HEIGHT / 2.5}`
