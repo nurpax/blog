@@ -36,18 +36,22 @@ scripts: /js/build/timing-diagram.js
 /* FLD split animation */
 .c64-fld-top {
   clip-path: inset(0px 0px 213px 0px);
+  -webkit-clip-path: inset(0px 0px 213px 0px);
 }
 .c64-fld-bottom {
   clip-path: inset(58px 0px 0px 0px);
+  -webkit-clip-path: inset(58px 0px 0px 0px);
   animation: fld-upndown 3.333s linear infinite;
   animation-timing-function: steps(200, start);
 }
 .c64-fld-bottom-border {
   clip-path: inset(235px 0px 0px 0px);
+  -webkit-clip-path: inset(235px 0px 0px 0px);
 }
 
 .logo-warp-crop {
   clip-path: inset(0px 0px 210px 0px);
+  -webkit-clip-path: inset(0px 0px 210px 0px);
 }
 
 @keyframes fld-upndown {
