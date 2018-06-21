@@ -17,7 +17,11 @@
         $endif$
         <script src="/js/jquery.min.js" type="text/javascript"></script>
         <script src="/js/jquery.flot.min.js" type="text/javascript"></script>
-        <script src="/js/build/timing-diagram.js" type="text/javascript"></script>
+        $if(scripts)$
+        $for(scripts)$
+        <script src="$path$" type="text/javascript"></script>
+        $endfor$
+        $endif$
 
 <script type="text/javascript">
 

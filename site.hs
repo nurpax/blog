@@ -23,6 +23,13 @@ import           Text.Pandoc.Walk (walk, query)
 
 import qualified Diagrams.Bintris as Bintris
 
+scriptContext = field "path" (\item -> return $ itemBody item)
+
+scriptList :: Context String
+scriptList = listFieldWith "scripts" scriptContext (\item -> do
+  scripts <- getMetadataField' (itemIdentifier item) "scripts"
+  mapM makeItem (words scripts))
+
 seriesLinks :: Context String
 seriesLinks =
   functionField "seriesLinks" $ \args item -> do
@@ -38,6 +45,7 @@ postCtx = mconcat
     [ modificationTimeField "mtime" "%U"
     , dateField "date" "%B %e, %Y"
     , seriesLinks
+    , scriptList
     , defaultContext
     ]
 
