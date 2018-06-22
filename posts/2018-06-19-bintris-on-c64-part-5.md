@@ -196,7 +196,7 @@ _(NB: This is a bit simplified, see [Missing Cycles](http://www.antimon.org/dl/c
 
 Let's say you have enabled sprites 0-3 and they all hit a bad line.  Now you have only 12 cycles to spare on your fancy raster routine (or in practice, more like 10 cycles.)
 
-Ten cycles is not a much.  For example, say you want to load and store some values.  Here's all you can run during a single bad line:
+Ten cycles is not all that much.  For example, say you want to load and store some values.  Here's all you can run during a single bad line:
 
 ```
 LDA abs_addr        (4 cycles)
