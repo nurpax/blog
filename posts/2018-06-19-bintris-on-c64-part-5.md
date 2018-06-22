@@ -127,7 +127,7 @@ To illustrate bad lines, I made this little interactive chart that shows the eff
 When do the bad lines occur?  Here's the bad line condition in pseudo code:
 
 ```
-   if (RASTER >= $30 && RASTER <= $7f) {
+   if (RASTER >= $30 && RASTER <= $f7) {
      if ((RASTER & 7) == YSCROLL) {
        // BAD LINE
      }
