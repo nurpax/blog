@@ -27,6 +27,18 @@ Resize an image with point-sampling while NOT preserving aspect-ratio (ImageMagi
 convert input.png -sample 640x200! output.png
 ```
 
+Double image width and height with point-sampling:
+
+```
+convert in.png -filter point -resize 200% out.png
+```
+
+Stack two images side by side:
+
+```
+convert left.png right.png -gravity center +append out.png
+```
+
 Crop the input image and then make a .gif (`+repage` is required to actually crop the output image dimensions too):
 
 ```
