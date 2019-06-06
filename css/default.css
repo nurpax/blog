@@ -11,7 +11,7 @@ body {
 pre, code {
   font-size:14px;
   margin-top:0px;
-  overflow:scroll;
+  overflow:auto;
 }
 
 a:link, a:visited, a:active {  text-decoration:none;  color:#579;}
@@ -28,8 +28,8 @@ ul, menu, dir {
 p {
   margin-left: 0px;
   margin-right: 0px;
-  margin-top: 0.4em;
-  margin-bottom: 0.4em;
+  margin-top: 0.7em;
+  margin-bottom: 0.7em;
 }
 
 p.post-author {
@@ -286,5 +286,3 @@ div.sine-columns-2 {
   margin:0px;
   margin-left: 1em;
 }
-
-

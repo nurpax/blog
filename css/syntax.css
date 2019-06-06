@@ -1,6 +1,6 @@
 .sourceCode {
   line-height: 1.3;
-  overflow:scroll;
+  overflow:auto;
 }
 
 .sourceCode > a:hover {

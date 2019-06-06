@@ -1,0 +1,53 @@
+
+:root {
+  --code-bg-light: #f1f1f1;
+  --code-bg: hsl(0, 0%, 10%);
+  --code-text: rgb(240, 240, 240);
+  --code-comment: rgb(66, 134, 66);
+  --code-string: rgb(107, 36, 36);
+}
+
+pre {
+  line-height: 1.25em;
+  color: black;
+  background: var(--code-bg-light);
+  padding: 0.1em 0.3em;
+
+  border-radius: 0.5em;
+  border: .3em solid var(--code-bg-light);
+  margin: .5em 0;
+  padding: 0.4em;
+
+  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+  font-size: 0.9em;
+  color: white;
+}
+
+code {
+  border-radius: 3px;
+  font-size: 1.0em;
+  color: #555349;
+  background: #f1f1f1;
+}
+
+pre code {
+  border-radius: 0px;
+  color: black;
+}
+
+pre code a {
+  text-decoration: none;
+}
+
+pre code a:hover, a:active {
+  text-decoration: none;
+  color: unset;
+}
+
+pre code span.co {
+  color: var(--code-comment);
+}
+
+pre code span.st {
+  color: var(--code-string);
+}
