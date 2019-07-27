@@ -70,6 +70,14 @@ Convert a series of image files into an MP4:
 ffmpeg -r 25 -i 'frame_%04d.png' -c:v libx264 -vf fps=25 -pix_fmt yuv420p out.mp4
 ```
 
+Convert a MOV/MP4 into a series of image files:
+
+```
+ffmpeg -i input.mov output_%04d.png
+# with scaling to 320x240 resolution
+ffmpeg -i input.mov -vf scale=320:240 output_%04d.png
+```
+
 Convert a MOV file into an MP4 (e.g., for uploading Quicktime screencaps to Twitter):
 
 ```
