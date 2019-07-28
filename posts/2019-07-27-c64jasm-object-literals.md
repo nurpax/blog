@@ -6,7 +6,7 @@ syntax-css: syntax2.css  # use a newer syntax CSS for this file
 #thumb: /images/c64/c64jasm/c64jasm-starter-example.png
 ---
 
-The latest [c64jasm] v0.6.0 added support for JavaScript style object literals.  This turned out to be surprisingly useful!  This post will go over this feature and some c64jasm tricks that this feature enables.
+The latest [c64jasm] v0.6.0 added support for JavaScript style object literals.  This turned out to be surprisingly useful!  Here we'll go over this feature and some tricks that it enables.
 
 This post assumes you're already familiar with the c64jasm assembler (see: [c64jasm manual](https://nurpax.github.io/c64jasm/)).
 
