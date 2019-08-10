@@ -153,9 +153,9 @@ irq_func: {
 
 Better but still noisy.
 
-Now here's the kicker: we can drop the `zp` argument from `mul_imm` declaration and rely on a convention that `zp` is passed implicitly in the enclosing scope at the macro call site.
+~~Now here's the kicker: we can drop the `zp` argument from `mul_imm` declaration and rely on a convention that `zp` is passed implicitly in the enclosing scope at the macro call site.~~
 
-In code:
+~~In code:~~
 
 ```{.asm}
 ; no 'zp' arg here, rely on it being in scope
@@ -179,6 +179,9 @@ irq_func: {
     +mul_imm(num1, 3)
 }
 ```
+
+**Update 2019-08-09**: Implicit parameters by the sort of "dynamic scoping" shown here does not work as of c64jasm 0.7.0.  When a macro is expanded, any symbols in the macro will use bindings from where the macro was declared, not where it's expanded.  Use global variables instead.  See [this gist](https://gist.github.com/nurpax/5aeaba58e359c6d040a9e0f87fa68ab9) for an example on how to do this cleanly.
+
 
 ## Wrap-up
 
