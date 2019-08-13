@@ -146,7 +146,7 @@ inf: jmp inf  ; halt
 
 This completely unrolls the line drawing part.  So it's really big at 286 bytes.
 
-Before diving into optimized variants of this code, let's make a couple of observations.
+Before diving into optimized variants of this code, let's make a couple of observations:
 
 First, we're running on the C64 with the ROM routines banked in.  There's a lot of goodies such as `JSR $E544` to clear the screen.
 
