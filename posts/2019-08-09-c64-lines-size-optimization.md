@@ -3,7 +3,7 @@ title: Dirty tricks 6502 programmers use
 author: Janne Hellsten
 public: true
 syntax-css: syntax2.css  # use a newer syntax CSS for this file
-thumb: /images/c64/lines/lines-2x.png
+thumb: /images/c64/lines/lines-scroll.gif
 ---
 
 TODO outline:
@@ -36,7 +36,7 @@ To set a character, you store a byte into into the `$0400` (e.g., `$0400 + y*40 
 
 You can control the border and background colors with memory mapped I/O registers at `$d020` (border) and `$d021` (background).
 
-Drawing the two lines is pretty easy as we can hardcode for the fixed slope.  Here's a C implementation that draws the lines and dumps screen contents on stdout (register writes stubbed out and screen RAM is `malloc()`'d memory that it runs on PC):
+Drawing the two lines is pretty easy as we can hardcode for the fixed line slope.  Here's a C implementation that draws the lines and dumps screen contents on stdout (register writes stubbed out and screen RAM is `malloc()`'d memory that it runs on PC):
 
 ```{.c}
 #include <stdint.h>
@@ -169,7 +169,7 @@ Second, address calculations on an 8-bit CPU are cumbersome and cost a lot of by
 
 We keep adding the line slope to a fixed pointer counter `yf` and when the 8-bit add sets the carry flag, add 40.  (The 8-bit carry flag is "simulated" in C above.)
 
-Here's a complete assembly implementation of this incremental approach.  This is not very size-optimized yet, it produces a hefty 82 byte PRG.
+Here's a complete assembly implementation of the incremental approach:
 
 ```{.asm}
 !include "c64.asm"
@@ -233,3 +233,143 @@ no_add:
 inf:    jmp inf
 }
 ```
+
+At 82 bytes, this is still pretty hefty.  A couple of obvious problems in this code come from 16-bit address computations.
+
+Setting up the `screenptr` value for indirect-indexed addressing:
+
+```{.asm}
+        ; set screenptr = $0400
+        lda #<$0400
+        sta screenptr+0
+        lda #>$0400
+        sta screenptr+1
+```
+
+Advancing `screenptr` to the next line by adding 40 to it.
+```{.asm}
+        ; advance screen ptr by 40
+        clc
+        lda screenptr
+        adc #40
+        sta screenptr
+        lda screenptr+1
+        adc #0
+        sta screenptr+1
+```
+
+Sure this code could probably be more compact but what if we didn't need manipulate 16-bit addresses in the first place?  Turns out we can do just that!
+
+## Trick 1: Scrolling!
+
+Instead of plotting the line across the screen RAM, we can only ever draw on the last Y=24 screen row, and scroll the whole screen up by calling a "scroll up" ROM function with `JSR $E8EA`!
+
+With this, the X-loop becomes something like below:
+
+```{.asm}
+        lda #0
+        sta x0
+        lda #39
+        sta x1
+xloop:
+        lda #$a0
+        ldx x0
+        ; hardcoded absolute address to last screen line
+        sta $0400 + 24*40, x
+        ldx x1
+        ; hardcoded absolute address to last screen line
+        sta $0400 + 24*40, x
+
+        adc yf
+        sta yf
+        bcc no_scroll
+        ; scroll screen up!
+        jsr $e8ea
+no_scroll:
+        inc x1
+        dec x0
+        bpl xloop
+```
+
+Here's how the line renderer progresses with this trick:
+
+<img width="75%" class="img-pixelated" src="/images/c64/lines/lines-scroll.gif" />
+
+This trick was one of my favorites in this compo.  It was also independently discovered by pretty much all the participants.
+
+## Trick 2: Self-modifying code
+
+The code to store the pixel values ends up being roughly:
+
+```{.asm}
+        ldx x1
+        ; hardcoded absolute address to last screen line
+        sta $0400 + 24*40, x
+        ldx x0
+        ; hardcoded absolute address to last screen line
+        sta $0400 + 24*40, x
+        inc x0
+        dec x1
+```
+
+This encodes into the following 14 byte sequence:
+
+```
+0803: A6 22               LDX $22
+0805: 9D C0 07            STA $07C0,X
+0808: A6 20               LDX $20
+080A: 9D C0 07            STA $07C0,X
+080D: E6 22               INC $22
+080F: C6 20               DEC $20
+```
+
+There's a more compact way to write this using self-modifying code (SMC)..
+
+```{.asm}
+        ldx x1
+        ; hardcoded absolute address to last screen line
+        sta $0400 + 24*40, x
+        ; hardcoded absolute address to last screen line
+addr0:  sta $0400 + 24*40
+        ; advance the second x-coord with SMC
+        inc addr0+1
+        dec x1
+```
+
+..which encodes to 13 bytes:
+
+```
+0803: A6 22               LDX $22
+0805: 9D C0 07            STA $07C0,X
+0808: 8D C0 07            STA $07C0
+080B: EE 09 08            INC $0809
+080E: C6 22               DEC $22
+```
+
+## Trick 3: Exploiting the power on state
+
+It was considered OK to make wild assumptions about the running environment: the line drawing PRG is the first thing that runs after C64 power on, and there was no requirement to exit cleanly back to the BASIC prompt.  So anything you find from the initial environment upon entry to your PRG, you can and should use to your advantage.  Here are some of the things that were considered "constant" upon entry to the PRG:
+
+- A, X, Y registers were assumed to be all zeros
+- All CPU flags cleared
+- Zeropage (addresses `$00`-`$ff`) contents
+
+Similarly, if you called any KERNAL ROM routines, you could totally take advantage of any side-effects they might have: returned CPU flags, temporary values set into zeropage, etc.
+
+After the first N passes of size-optimization, everyone turned their eyes on this machine monitor view to look for any interesting constants:
+
+<img class="img-pixelated" src="/images/c64/lines/monitor-screenshot.png" />
+
+Indeed, the zeropage did contain some useful values:
+
+- `$d5`: 39/$27 == line length - 1
+- `$22`: 64/$40 == initial value for line slope counter
+
+## Trick 4: BASIC startup tricks
+
+TODO:
+
+- basic startup header, injecting to zp
+- no basic start at all
+
+<img width="75%" class="img-pixelated" src="/images/c64/lines/vice-screen-sys.png" />
