@@ -6,24 +6,16 @@ syntax-css: syntax2.css  # use a newer syntax CSS for this file
 thumb: /images/c64/lines/lines-scroll.gif
 ---
 
-TODO outline:
+- TODO twitter compo and instructions: https://gist.github.com/nurpax/96285c08710387e73ea5e039e27980af
+- TODO list participants with names (twitter handles too?) with links to source code.
 
-- Intro (duh)
-  * explain memory layout, link to instruction set
-  * explain the basic vic functionality like border color, charset mode
-- C implementation, asm reference
-- Slightly optimized asm "reference" with C too
-- Assembler conventions: `$ab`, `$#ab`
-
-Foo foo foo. Hosted a twitter compo yeah yeah.  https://gist.github.com/nurpax/96285c08710387e73ea5e039e27980af
-
-The competition rules were simple: Make a C64 executable (PRG) that draws two lines to form the below image.  The objective is to do this in as few bytes as possible.
+The competition rules were simple: Make a C64 executable (PRG) that draws two lines to form the below image.  The objective was to do this in as few bytes as possible.
 
 <img width="75%" class="img-pixelated" src="/images/c64/lines/lines-2x.png" />
 
 Entries were posted as Twitter replies and DMs, containing only the PRG byte-length and an MD5 hash of the PRG file.
 
-This blog post is a review of the sort of C64 coding tricks that were used in compo submissions.
+This blog post is a review of the sort of assembly coding tricks that were used in compo submissions.
 
 ## Basics
 
@@ -365,11 +357,104 @@ Indeed, the zeropage did contain some useful values:
 - `$d5`: 39/$27 == line length - 1
 - `$22`: 64/$40 == initial value for line slope counter
 
+You can use these to shave off a few bytes at init time.  For example:
+
+```{.asm}
+!let x0 = $20
+        lda #39      ; 0801: A9 27    LDA #$27
+        sta x0       ; 0803: 85 20    STA $20
+xloop:
+        dec x0       ; 0805: C6 20    DEC $20
+        bpl xloop    ; 0807: 10 FC    BPL $0805
+```
+
+As `$d5` contains a value 39, you can map your `x0` counter to point to `$d5` and skip the LDA/STA pair:
+
+```{.asm}
+!let x0 = $d5
+        ; nothing here!
+xloop:
+        dec x0       ; 0801: C6 D5    DEC $D5
+        bpl xloop    ; 0803: 10 FC    BPL $0801
+```
+
+Philip's [winning entry](https://github.com/fsphil/tinyx/blob/master/x34/x34.s) takes this to the next level.  Recall the address of the last char row `$07C0` (==`$0400+24*40`).  This value does not exist in the zeropage on init.  However, as a side-effect of how the ROM `JSR $E8EA` uses zeropage temporaries, addresses `$D1-$D2` will contain `$07C0` on exit from the scroll up function.  So instead of `STA $07C0,x` to store a pixel, you can use the indirect-indexed addressing mode and write `STA ($D1),y` to save a byte.
+
+Philip went even further with his `$E8EA` exploits, you should read through his 32 byte work of art [here](https://github.com/fsphil/tinyx/blob/master/x32/x32.s).
+
 ## Trick 4: BASIC startup tricks
 
-TODO:
+A typical C64 PRG binary file contains the following:
 
-- basic startup header, injecting to zp
-- no basic start at all
+- First 2 bytes: loading address (usually `$0801`)
+- 12 bytes of BASIC startup sequence
+
+The BASIC startup sequence looks like this (addresses `$801-$80C`):
+
+```
+0801: 0B 08 0A 00 9E 32 30 36
+0809: 31 00 00 00
+080D: 8D 20 D0                    STA $D020
+```
+
+Without going into details about [tokenized BASIC memory layout](https://www.c64-wiki.com/wiki/BASIC_token), this sequence more or less amounts to "10 SYS 2061".  Address `2061` (`$080D`) is where our actual machine code program starts when the BASIC interpreter executes the SYS command.
+
+Well, 14 bytes just to get going feels excessive.  Philip and Geir had used some clever tricks to get rid of the BASIC sequence altogether.  This requires that the PRG is loaded with `LOAD "*",8,1` as `LOAD "*",8` ignores the PRG loading address (the first two bytes) and always loads to `$0801`.
 
 <img width="75%" class="img-pixelated" src="/images/c64/lines/vice-screen-sys.png" />
+
+Two methods were used:
+
+- The stack trick
+- The BASIC warm reset vector trick
+
+### The stack trick
+
+- TODO this basically causes the first RTS in the BASIC interpreter to return to our code.
+
+```{.asm}
+	* = $01F8
+	!word scroll - 1
+
+scroll:	jsr $E8EA
+```
+
+### The BASIC warm reset vector trick
+
+This is a little easier to explain by just looking at the PRG disassembly.
+
+```
+02E6: 20 EA E8                    JSR $E8EA
+02E9: A4 D5                       LDY $D5
+02EB: A9 A0                       LDA #$A0
+02ED: 99 20 D0                    STA $D020,Y
+02F0: 91 D1                       STA ($D1),Y
+02F2: 9D B5 07                    STA $07B5,X
+02F5: E6 D6                       INC $D6
+02F7: 65 90                       ADC $90
+02F9: 85 90                       STA $90
+02FB: C6 D5                       DEC $D5
+02FD: 30 FE                       BMI $02FD
+02FF: 90 E7                       BCC $02E8
+0301: 4C E6 02                    JMP $02E6
+```
+
+Notice the last line (`JMP $02E6`).  The JMP instruction starts at address `$0301` with the branch target stored in addresses `$0302-$0303`.
+
+When this code is loaded into memory starting at address `$02E6`, a value of `$02E6` is written to addresses `$0302-$0303`.  Well, location `$0302-$0303` has a special meaning: it contains a pointer to the "BASIC idle loop" (see [C64 memory map](http://sta.c64.org/cbm64mem.html) for details).  Loading the PRG overwrote this location with `$02E6` and so when the BASIC interpreter tries to jump to the idle loop after warm reset, it never enters the idle loop but instead ends up in the line renderer!
+
+### Other BASIC startup related tricks
+
+Petri had discovered [another BASIC start trick](https://github.com/petrihakkinen/c64-lines/blob/master/main37.asm) which allows injecting your own constants into the zeropage.  In this method, you hand-craft your own tokenized BASIC start sequence and encode your constants into the BASIC program line number.  The BASIC line number, ahem, your constants, will be stored in addresses `$39-$3A` upon entry.   Very clever!
+
+## Winner entry
+
+TODO source and disassembly of the winner submission
+
+## Post-deadline 32 byte version
+
+TODO source and disassembly of the 32 byte version that uses pretty much every trick explained in this post.
+
+## Closing
+
+Thanks for reading.
