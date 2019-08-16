@@ -5,30 +5,45 @@ public: true
 syntax-css: syntax2.css  # use a newer syntax CSS for this file
 thumb: /images/c64/lines/lines-scroll.gif
 ---
+``` {.hakyll-inline-css}
+.narrowlines {
+    line-height: 0.9em;
+}
+```
 
-- TODO twitter compo and instructions: https://gist.github.com/nurpax/96285c08710387e73ea5e039e27980af
-- TODO list participants with names (twitter handles too?) with links to source code.
-
-The competition rules were simple: Make a C64 executable (PRG) that draws two lines to form the below image.  The objective was to do this in as few bytes as possible.
+This post recaps a little [Commodore 64 coding competition I hosted on Twitter](https://twitter.com/nurpax/status/1159192477598965766).  The competition rules were simple: make a C64 executable (PRG) that draws two lines to form the below image.  The objective was to do this in as few bytes as possible.
 
 <img width="75%" class="img-pixelated" src="/images/c64/lines/lines-2x.png" />
 
 Entries were posted as Twitter replies and DMs, containing only the PRG byte-length and an MD5 hash of the PRG file.
 
-This blog post is a review of the sort of assembly coding tricks that were used in compo submissions.
+Here's a list of participants with source code links to their submissions:
+
+- [Philip Heron](https://twitter.com/fsphil) ([code](https://github.com/fsphil/tinyx) - 34 bytes - compo winner)
+- [Geir Straume](https://twitter.com/GeirSigmund) ([code](https://c64prg.appspot.com/downloads/lines34b.zip) - 34 bytes)
+- [Petri Häkkinen](https://twitter.com/petrih3) ([code](https://github.com/petrihakkinen/c64-lines) - 37 bytes)
+- [Mathlev Raxenblatz](https://twitter.com/laubzega) ([code](https://gist.github.com/laubzega/fb59ee6a3d482feb509dae7b77e925cf) - 38 bytes)
+- [Jan Achrenius](https://twitter.com/achrenico) ([code TODO](https://gist.github.com/foo) - 48 bytes)
+- [Jamie Fuller](https://twitter.com/jamie30dbs) ([code](https://github.com/30dbs/c64x) - 50 bytes)
+- [David A. Gershman](https://twitter.com/dagershman) ([code](http://c64.dagertech.net/cgi-bin/cgiwrap/c64/index.cgi?p=xchallenge/.git;a=tree) - 53 bytes)
+- [Janne Hellsten](https://twitter.com/nurpax) ([code](https://gist.github.com/nurpax/d429be441c7a9f4a6ceffbddc35a0003) - 56 bytes)
+
+(If I missed someone, please let me know and I'll update the post.)
+
+The rest of this post focuses on some of the assembly coding tricks used in the compo submissions.
 
 ## Basics
 
-The C64 default graphics mode is the 40x25 charset mode.  The framebuffer split into two arrays in RAM:
+The C64 default graphics mode is the 40x25 charset mode.  The framebuffer is split into two arrays in RAM:
 
-* `$0400` (screen RAM, 40x25 bytes)
-* `$d800` (color RAM, 40x25 bytes)
+* `$0400` (Screen RAM, 40x25 bytes)
+* `$d800` (Color RAM, 40x25 bytes)
 
-To set a character, you store a byte into into the `$0400` (e.g., `$0400 + y*40 + x`) buffer.  The color RAM is by default initialized to light blue (color 14) which happens to be the same color we use for the lines, so we don't have to touch the color RAM in this exercise.
+To set a character, you store a byte into screen RAM at `$0400` (e.g., `$0400+y*40+x`).  Color RAM is by default initialized to light blue (color 14) which happens to be the same color we use for the lines -- meaning we can leave color RAM untouched.
 
 You can control the border and background colors with memory mapped I/O registers at `$d020` (border) and `$d021` (background).
 
-Drawing the two lines is pretty easy as we can hardcode for the fixed line slope.  Here's a C implementation that draws the lines and dumps screen contents on stdout (register writes stubbed out and screen RAM is `malloc()`'d memory that it runs on PC):
+Drawing the two lines is pretty easy as we can hardcode for the fixed line slope.  Here's a C implementation that draws the lines and dumps screen contents on stdout (register writes stubbed out and screen RAM is `malloc()`'d to make it run on PC):
 
 ```{.c}
 #include <stdint.h>
@@ -71,9 +86,9 @@ int main() {
 }
 ```
 
-The screen codes used above are: `$20` (blank character, e.g., space) and `$a0` (8x8 filled block).  If you run it, you should see ASCII art for the two lines:
+The screen codes used above are: `$20` (blank) and `$a0` (8x8 filled block).  If you run it, you should see ASCII art for the two lines:
 
-```
+```{.narrowlines}
 ##....................................##
 ..#..................................#..
 ...##..............................##...
@@ -127,7 +142,7 @@ clrscr:
     ; with assembly pseudos
     lda #$a0
 
-    !for i in range(0, 40) {
+    !for i in range(40) {
         !let y0 = Math.floor(25/40*(i+0.5))
         sta $0400 + y0*40 + i
         sta $0400 + (24-y0)*40 + i
@@ -136,13 +151,13 @@ inf: jmp inf  ; halt
 }
 ```
 
-This completely unrolls the line drawing part.  So it's really big at 286 bytes.
+This completely unrolls the line drawing part resulting in a fairly large, 286 byte PRG.
 
-Before diving into optimized variants of this code, let's make a couple of observations:
+Before diving into optimized variants, let's make a couple of observations:
 
-First, we're running on the C64 with the ROM routines banked in.  There's a lot of goodies such as `JSR $E544` to clear the screen.
+First, we're running on the C64 with the ROM routines banked in.  There's a bunch of subroutines in ROM that may be useful for our little program.  For example, you can clear the screen with `JSR $E544`.
 
-Second, address calculations on an 8-bit CPU are cumbersome and cost a lot of bytes.  The CPU also doesn't have a multiplier, so computing something like `y*40 + i` usually involves either a bunch of bit shifts or a lookup table, again costing bytes.  To avoid multiplying by 40, we can instead advance the screen pointer incrementally:
+Second, address calculations on an 8-bit CPU like the 6502 can be cumbersome and cost a lot of bytes.  This CPU also doesn't have a multiplier, so computing something like `y*40+i` usually involves either a bunch of logical shifts or a lookup table, again costing bytes.  To avoid multiplying by 40, we can instead advance the screen pointer incrementally:
 
 ```{.c}
     int yslope = (25<<8)/40;
@@ -159,7 +174,7 @@ Second, address calculations on an 8-bit CPU are cumbersome and cost a lot of by
     }
 ```
 
-We keep adding the line slope to a fixed pointer counter `yf` and when the 8-bit add sets the carry flag, add 40.  (The 8-bit carry flag is "simulated" in C above.)
+We keep adding the line slope to a fixed pointer counter `yf` and when the 8-bit addition sets the carry flag, add 40.
 
 Here's a complete assembly implementation of the incremental approach:
 
@@ -278,8 +293,8 @@ xloop:
         ; scroll screen up!
         jsr $e8ea
 no_scroll:
-        inc x1
-        dec x0
+        inc x0
+        dec x1
         bpl xloop
 ```
 
@@ -348,7 +363,7 @@ It was considered OK to make wild assumptions about the running environment: the
 
 Similarly, if you called any KERNAL ROM routines, you could totally take advantage of any side-effects they might have: returned CPU flags, temporary values set into zeropage, etc.
 
-After the first N passes of size-optimization, everyone turned their eyes on this machine monitor view to look for any interesting constants:
+After the first few size-optimization passes, everyone turned their eyes on this machine monitor view to look for any interesting constants:
 
 <img class="img-pixelated" src="/images/c64/lines/monitor-screenshot.png" />
 
@@ -378,7 +393,7 @@ xloop:
         bpl xloop    ; 0803: 10 FC    BPL $0801
 ```
 
-Philip's [winning entry](https://github.com/fsphil/tinyx/blob/master/x34/x34.s) takes this to the next level.  Recall the address of the last char row `$07C0` (==`$0400+24*40`).  This value does not exist in the zeropage on init.  However, as a side-effect of how the ROM `JSR $E8EA` uses zeropage temporaries, addresses `$D1-$D2` will contain `$07C0` on exit from the scroll up function.  So instead of `STA $07C0,x` to store a pixel, you can use the indirect-indexed addressing mode and write `STA ($D1),y` to save a byte.
+Philip's [winning entry](https://github.com/fsphil/tinyx/blob/master/x34/x34.s) takes this to the extreme.  Recall the address of the last char row `$07C0` (==`$0400+24*40`).  This value does not exist in the zeropage on init.  However, as a side-effect of how the ROM `$E8EA` (scroll up) subroutine uses zeropage temporaries, addresses `$D1-$D2` will contain `$07C0` on return from this function.  So instead of `STA $07C0,x` to store a pixel, you can use the indirect-indexed addressing mode and write `STA ($D1),y` to save a byte.
 
 Philip went even further with his `$E8EA` exploits, you should read through his 32 byte work of art [here](https://github.com/fsphil/tinyx/blob/master/x32/x32.s).
 
@@ -392,14 +407,13 @@ A typical C64 PRG binary file contains the following:
 The BASIC startup sequence looks like this (addresses `$801-$80C`):
 
 ```
-0801: 0B 08 0A 00 9E 32 30 36
-0809: 31 00 00 00
-080D: 8D 20 D0                    STA $D020
+0801: 0B 08 0A 00 9E 32 30 36 31 00 00 00
+080D: 8D 20 D0     STA $D020
 ```
 
 Without going into details about [tokenized BASIC memory layout](https://www.c64-wiki.com/wiki/BASIC_token), this sequence more or less amounts to "10 SYS 2061".  Address `2061` (`$080D`) is where our actual machine code program starts when the BASIC interpreter executes the SYS command.
 
-Well, 14 bytes just to get going feels excessive.  Philip and Geir had used some clever tricks to get rid of the BASIC sequence altogether.  This requires that the PRG is loaded with `LOAD "*",8,1` as `LOAD "*",8` ignores the PRG loading address (the first two bytes) and always loads to `$0801`.
+14 bytes just to get going feels excessive.  Philip and Geir had used some clever tricks to get rid of the BASIC sequence altogether.  This requires that the PRG is loaded with `LOAD "*",8,1` as `LOAD "*",8` ignores the PRG loading address (the first two bytes) and always loads to `$0801`.
 
 <img width="75%" class="img-pixelated" src="/images/c64/lines/vice-screen-sys.png" />
 
@@ -413,8 +427,8 @@ Two methods were used:
 - TODO this basically causes the first RTS in the BASIC interpreter to return to our code.
 
 ```{.asm}
-	* = $01F8
-	!word scroll - 1
+    * = $01F8
+    !word scroll - 1
 
 scroll:	jsr $E8EA
 ```
@@ -424,19 +438,19 @@ scroll:	jsr $E8EA
 This is a little easier to explain by just looking at the PRG disassembly.
 
 ```
-02E6: 20 EA E8                    JSR $E8EA
-02E9: A4 D5                       LDY $D5
-02EB: A9 A0                       LDA #$A0
-02ED: 99 20 D0                    STA $D020,Y
-02F0: 91 D1                       STA ($D1),Y
-02F2: 9D B5 07                    STA $07B5,X
-02F5: E6 D6                       INC $D6
-02F7: 65 90                       ADC $90
-02F9: 85 90                       STA $90
-02FB: C6 D5                       DEC $D5
-02FD: 30 FE                       BMI $02FD
-02FF: 90 E7                       BCC $02E8
-0301: 4C E6 02                    JMP $02E6
+02E6: 20 EA E8    JSR $E8EA
+02E9: A4 D5       LDY $D5
+02EB: A9 A0       LDA #$A0
+02ED: 99 20 D0    STA $D020,Y
+02F0: 91 D1       STA ($D1),Y
+02F2: 9D B5 07    STA $07B5,X
+02F5: E6 D6       INC $D6
+02F7: 65 90       ADC $90
+02F9: 85 90       STA $90
+02FB: C6 D5       DEC $D5
+02FD: 30 FE       BMI $02FD
+02FF: 90 E7       BCC $02E8
+0301: 4C E6 02    JMP $02E6
 ```
 
 Notice the last line (`JMP $02E6`).  The JMP instruction starts at address `$0301` with the branch target stored in addresses `$0302-$0303`.
@@ -447,14 +461,143 @@ When this code is loaded into memory starting at address `$02E6`, a value of `$0
 
 Petri had discovered [another BASIC start trick](https://github.com/petrihakkinen/c64-lines/blob/master/main37.asm) which allows injecting your own constants into the zeropage.  In this method, you hand-craft your own tokenized BASIC start sequence and encode your constants into the BASIC program line number.  The BASIC line number, ahem, your constants, will be stored in addresses `$39-$3A` upon entry.   Very clever!
 
+## Trick 5: Unconventional control flow
+
+Here's a somewhat simplified version of the x-loop that draws only a single line and then halts execution once the line is done:
+
+```{.asm}
+        lda #39
+        sta x1
+xloop:
+        lda #$a0
+        ldx x1
+        sta $0400 + 24*40, x
+
+        adc yf
+        sta yf
+        bcc no_scroll
+        ; scroll screen up!
+        jsr $e8ea
+no_scroll:
+        dec x1
+        bpl xloop
+
+        ; intentionally halt at the end
+inf:    jmp inf
+```
+
+This has a bug in it, though.  When we've drawn the last pixel of a line, we should NOT scroll the screen up anymore.  Thus we'd need to add more branches to skip scrolling in that case:
+
+```{.asm}
+        lda #39
+        sta x1
+xloop:
+        lda #$a0
+        ldx x1
+        sta $0400 + 24*40, x
+
+        dec x1
+        ; skip scrolling if last pixel
+        bmi done
+
+        adc yf
+        sta yf
+        bcc no_scroll
+        ; scroll screen up!
+        jsr $e8ea
+no_scroll:
+        jmp xloop
+done:
+
+        ; intentionally halt at the end
+inf:    jmp inf
+```
+
+The control flow looks a lot like what a C compiler would output from a structured program.  The code to skip introduced a new `JMP abs` instruction that takes up 3 bytes.  Conditional branches use a relative 8-bit immediate field for the branch target, and thus they're only two bytes a piece.
+
+The "skip last scroll" JMP can be avoided by moving the scroll up call to the top of the loop, and restructuring the control flow a bit.  This is the pattern Philip had come up with:
+
+```{.asm}
+        lda #39
+        sta x1
+scroll: jsr $e8ea
+xloop:
+        lda #$a0
+        ldx x1
+        sta $0400 + 24*40, x
+
+        adc yf
+        sta yf
+        dec x1     ; doesn't set carry!
+inf:    bmi inf    ; hang here if last pixel!
+        bcc xloop  ; next pixel if no scroll
+        bcs scroll ; scroll up and continue
+```
+
+This completely eliminates one 3 byte JMP and converts another JMP to a 2 byte conditional branch, saving 4 bytes in total.
+
+## Trick 6: Bitpacked line drawing
+
+Some of the entries didn't use a line slope counter but rather they had bit-packed the line pattern into an 8-bit constant.  This packing comes out of a realisation that the pixel position along the line follows a repeating 8 pixel pattern:
+
+```{.c}
+int mask = 0xB6; // 10110110
+uint8_t* dst = screenRAM;
+for (int x = 0; x < 40; x++) {
+    dst[x] = 0xA0;
+    if (mask & (1 << (x&7))) {
+        dst += 40; // go down a row
+    }
+}
+```
+
+This is translates to pretty compact assembly.  The slope counter variants tended to be even smaller, though.
+
 ## Winner entry
 
-TODO source and disassembly of the winner submission
+This is the [winning 34 byte entry](https://github.com/fsphil/tinyx/blob/master/x34/x34.s) from Philip.  Most of the above really comes together nicely in his code:
 
-## Post-deadline 32 byte version
+```{.asm}
+ov = $22 ; == $40, initial value for the overflow counter
+ct = $D5 ; == $27 / 39, number of passes. Decrementing, finished at -1
+lp = $D1 ; == $07C0, pointer to bottom line. Set by the kernal scroller
 
-TODO source and disassembly of the 32 byte version that uses pretty much every trick explained in this post.
+        ; Overwrite the return address of the kernal loader on the stack
+        ; with a pointer to our own code
 
-## Closing
+        * = $01F8
+        .word scroll - 1
 
-Thanks for reading.
+scroll: jsr $E8EA    ; Kernal scroll up, also sets lp pointer to $07C0
+loop:   ldy ct	     ; Load the decrementing counter into Y (39 > -1)
+        lda #$A0     ; Load the PETSCII block / black col / ov step value
+        sta $D020, y ; On the last two passes, sets the background black
+p1:     sta $07C0    ; Draw first block (left > right line)
+        sta (lp), y  ; Draw second block (right > left line)
+        inc p1 + 1   ; Increment pointer for the left > right line
+        adc ov	     ; Add step value $A0 to ov
+        sta ov
+        dec ct	     ; Decrement the Y counter
+        bmi *	     ; If it goes negative, we're finished
+        bcc loop     ; Repeat. If ov didn't overflow, don't scroll
+        bcs scroll   ; Repeat. If ov overflowed, scroll
+```
+
+## Why stop at 34 bytes, though?
+
+Once the competition was over, everyone shared code and notes, and a number of lively conversations took place on how to do even better.
+
+I'm not going into these entries in more detail, but you should definitely check them out.  There's some very cool stuff in them!
+
+You can find these entries here:
+
+- [Philip - 33 bytes](https://gist.github.com/fsphil/05deaa06804b9b2054260b616cafed4b)
+- [Philip - 32 bytes](https://gist.github.com/fsphil/01bda1a9dd58c219002ddd6e18b36c3f)
+- [Petri - 31 bytes](https://github.com/petrihakkinen/c64-lines/blob/master/main31.asm)
+- [Philip - 29 bytes](https://gist.github.com/fsphil/7655a394ec5f953c910e9d9369dced56)
+
+...
+
+Thanks for reading.  And most of all, thanks Mathlev, Phil, Geir, Petri, Jamie, Jan and David for your participation.  (I hope I didn't miss anyone -- it was really difficult to keep track of these in Twitter mentions!)
+
+PS. Petri had named my compo "@nurpax's annual C64 size optimization compo", so uhm, see you next year, I guess.
