@@ -20,7 +20,7 @@ thumb: /images/c64/lines/lines-scroll.gif
 }
 ```
 
-This post recaps a little [Commodore 64 coding competition I hosted on Twitter](https://twitter.com/nurpax/status/1159192477598965766).  The competition rules were simple: make a C64 executable (PRG) that draws two lines to form the below image.  The objective was to do this in as few bytes as possible.
+This post recaps some of the C64 coding tricks used in my little [Commodore 64 coding competition](https://twitter.com/nurpax/status/1159192477598965766).  The competition rules were simple: make a C64 executable (PRG) that draws two lines to form the below image.  The objective was to do this in as few bytes as possible.
 
 <div class="center">
 <img width="75%" class="img-pixelated" src="/images/c64/lines/lines-2x.png" />
@@ -34,7 +34,7 @@ Here's a list of participants with source code links to their submissions:
 - [Geir Straume](https://twitter.com/GeirSigmund) ([code](https://c64prg.appspot.com/downloads/lines34b.zip) - 34 bytes)
 - [Petri Häkkinen](https://twitter.com/petrih3) ([code](https://github.com/petrihakkinen/c64-lines) - 37 bytes)
 - [Mathlev Raxenblatz](https://twitter.com/laubzega) ([code](https://gist.github.com/laubzega/fb59ee6a3d482feb509dae7b77e925cf) - 38 bytes)
-- [Jan Achrenius](https://twitter.com/achrenico) ([code TODO](https://gist.github.com/foo) - 48 bytes)
+- [Jan Achrenius](https://twitter.com/achrenico) ([code](https://twitter.com/achrenico/status/1161383381835362305) - 48 bytes)
 - [Jamie Fuller](https://twitter.com/jamie30dbs) ([code](https://github.com/30dbs/c64x) - 50 bytes)
 - [David A. Gershman](https://twitter.com/dagershman) ([code](http://c64.dagertech.net/cgi-bin/cgiwrap/c64/index.cgi?p=xchallenge/.git;a=tree) - 53 bytes)
 - [Janne Hellsten](https://twitter.com/nurpax) ([code](https://gist.github.com/nurpax/d429be441c7a9f4a6ceffbddc35a0003) - 56 bytes)
@@ -162,7 +162,7 @@ inf: jmp inf  ; halt
 }
 ```
 
-This completely unrolls the line drawing part resulting in a fairly large, 286 byte PRG.
+This completely unrolls the line drawing part resulting in a fairly large 286 byte PRG.
 
 Before diving into optimized variants, let's make a couple of observations:
 
@@ -276,7 +276,7 @@ Advancing `screenptr` to the next row by adding 40:
         sta screenptr+1
 ```
 
-Sure this code could probably be more compact but what if we didn't need manipulate 16-bit addresses in the first place?  Let's see how we can avoid it.
+Sure this code could probably be made smaller but what if we didn't need manipulate 16-bit addresses in the first place?  Let's see this can be avoided.
 
 ## Trick 1: Scrolling!
 
@@ -295,7 +295,6 @@ xloop:
         ; hardcoded absolute address to last screen line
         sta $0400 + 24*40, x
         ldx x1
-        ; hardcoded absolute address to last screen line
         sta $0400 + 24*40, x
 
         adc yf
@@ -326,7 +325,6 @@ The code to store the pixel values ends up being roughly:
         ; hardcoded absolute address to last screen line
         sta $0400 + 24*40, x
         ldx x0
-        ; hardcoded absolute address to last screen line
         sta $0400 + 24*40, x
         inc x0
         dec x1
@@ -347,9 +345,7 @@ There's a more compact way to write this using self-modifying code (SMC)..
 
 ```{.asm}
         ldx x1
-        ; hardcoded absolute address to last screen line
         sta $0400 + 24*40, x
-        ; hardcoded absolute address to last screen line
 addr0:  sta $0400 + 24*40
         ; advance the second x-coord with SMC
         inc addr0+1
@@ -376,13 +372,13 @@ Making wild assumptions about the running environment was considered OK in this 
 
 Similarly, if you called any KERNAL ROM routines, you could totally take advantage of any side-effects they might have: returned CPU flags, temporary values set into zeropage, etc.
 
-After the first few size-optimization passes, everyone turned their eyes on this machine monitor view to look for any interesting constants:
+After the first few size-optimization passes, everyone turned their eyes on this machine monitor view to look for any interesting values:
 
 <div class="center overflow">
 <img class="img-pixelated" src="/images/c64/lines/monitor-screenshot.png" />
 </div>
 
-The zeropage indeed contains some useful values:
+The zeropage indeed contains some useful values for our purposes:
 
 - `$d5`: 39/$27 == line length - 1
 - `$22`: 64/$40 == initial value for line slope counter
@@ -409,8 +405,6 @@ xloop:
 ```
 
 Philip's [winning entry](https://github.com/fsphil/tinyx/blob/master/x34/x34.s) takes this to the extreme.  Recall the address of the last char row `$07C0` (==`$0400+24*40`).  This value does not exist in the zeropage on init.  However, as a side-effect of how the ROM "scroll up" subroutine uses zeropage temporaries, addresses `$D1-$D2` will contain `$07C0` on return from this function.  So instead of `STA $07C0,x` to store a pixel, you can use the one byte shorter indirect-indexed addressing mode store `STA ($D1),y`.
-
-Philip went even further with his `$E8EA` exploits, you should read through his 32 byte work of art [here](https://github.com/fsphil/tinyx/blob/master/x32/x32.s).
 
 ## Trick 4: Smaller startup
 
@@ -441,14 +435,16 @@ Two methods were used:
 
 ### The stack trick
 
-- TODO this basically causes the first RTS in the BASIC interpreter to return to our code.
+The trick is to stomp the CPU stack at `$01F8` with a value that points to our desired entry point.  This is done by crafting a PRG that starts with a 16-bit pointer pointing to our code and loading the PRG into `$01F8`:
 
 ```{.asm}
     * = $01F8
-    !word scroll - 1
+    !word scroll - 1  ; overwrite stack
 
 scroll:	jsr $E8EA
 ```
+
+Once the BASIC loader (see [disassembly](https://www.pagetable.com/c64disasm/#F4A5)) has finished loading and returns to its caller with `RTS`, instead of returning to whoever called LOAD, it returns right into our PRG.
 
 ### The BASIC warm reset vector trick
 
@@ -503,7 +499,7 @@ no_scroll:
 inf:    jmp inf
 ```
 
-This has a bug in it, though.  When we've drawn the last pixel of a line, we should NOT scroll the screen up anymore.  Thus we'd need to add more branches to skip scrolling in that case:
+This has a bug in it, though.  When we've drawn the last pixel of a line, we should NOT scroll the screen up anymore.  Thus we need more branching to skip scrolling on the last pixel write:
 
 ```{.asm}
         lda #39
@@ -602,14 +598,14 @@ p1:     sta $07C0    ; Draw first block (left > right line)
 
 ## Why stop at 34 bytes, though?
 
-Once the competition was over, everyone shared code and notes, and a number of lively conversations took place on how to do even better.
-
-I won't be reviewing them here.  You should check them out yourself -- there's some really cool stuff in them:
+Once the competition was over, everyone shared code and notes, and a number of lively conversations took place on how to do even better.  Several smaller variants were posted after the deadline:
 
 - [Philip - 33 bytes](https://gist.github.com/fsphil/05deaa06804b9b2054260b616cafed4b)
 - [Philip - 32 bytes](https://gist.github.com/fsphil/01bda1a9dd58c219002ddd6e18b36c3f)
 - [Petri - 31 bytes](https://github.com/petrihakkinen/c64-lines/blob/master/main31.asm)
 - [Philip - 29 bytes](https://gist.github.com/fsphil/7655a394ec5f953c910e9d9369dced56)
+
+You should check them out -- there are some real gems to be found.
 
 ...
 
