@@ -9,11 +9,22 @@ thumb: /images/c64/lines/lines-scroll.gif
 .narrowlines {
     line-height: 0.9em;
 }
+.overflow {
+	width: 100%;
+	overflow-x: auto;
+}
+.center {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
 ```
 
 This post recaps a little [Commodore 64 coding competition I hosted on Twitter](https://twitter.com/nurpax/status/1159192477598965766).  The competition rules were simple: make a C64 executable (PRG) that draws two lines to form the below image.  The objective was to do this in as few bytes as possible.
 
+<div class="center">
 <img width="75%" class="img-pixelated" src="/images/c64/lines/lines-2x.png" />
+</div>
 
 Entries were posted as Twitter replies and DMs, containing only the PRG byte-length and an MD5 hash of the PRG file.
 
@@ -174,9 +185,9 @@ Second, address calculations on an 8-bit CPU like the 6502 can be cumbersome and
     }
 ```
 
-We keep adding the line slope to a fixed pointer counter `yf` and when the 8-bit addition sets the carry flag, add 40.
+We keep adding the line slope to a fixed point counter `yf` and when the 8-bit addition sets the carry flag, add 40.
 
-Here's a complete assembly implementation of the incremental approach:
+Here's the incremental approach implemented in assembly:
 
 ```{.asm}
 !include "c64.asm"
@@ -241,7 +252,7 @@ inf:    jmp inf
 }
 ```
 
-At 82 bytes, this is still pretty hefty.  A couple of obvious problems in this code come from 16-bit address computations.
+At 82 bytes, this is still pretty hefty.  A couple of obvious size problems arise from 16-bit address computations:
 
 Setting up the `screenptr` value for indirect-indexed addressing:
 
@@ -253,7 +264,7 @@ Setting up the `screenptr` value for indirect-indexed addressing:
         sta screenptr+1
 ```
 
-Advancing `screenptr` to the next line by adding 40 to it.
+Advancing `screenptr` to the next row by adding 40:
 ```{.asm}
         ; advance screen ptr by 40
         clc
@@ -265,13 +276,13 @@ Advancing `screenptr` to the next line by adding 40 to it.
         sta screenptr+1
 ```
 
-Sure this code could probably be more compact but what if we didn't need manipulate 16-bit addresses in the first place?  Turns out we can do just that!
+Sure this code could probably be more compact but what if we didn't need manipulate 16-bit addresses in the first place?  Let's see how we can avoid it.
 
 ## Trick 1: Scrolling!
 
-Instead of plotting the line across the screen RAM, we can only ever draw on the last Y=24 screen row, and scroll the whole screen up by calling a "scroll up" ROM function with `JSR $E8EA`!
+Instead of plotting the line across the screen RAM, we draw only on the last Y=24 screen row, and scroll the whole screen up by calling a "scroll up" ROM function with `JSR $E8EA`!
 
-With this, the X-loop becomes something like below:
+The x-loop becomes:
 
 ```{.asm}
         lda #0
@@ -300,9 +311,11 @@ no_scroll:
 
 Here's how the line renderer progresses with this trick:
 
+<div class="center">
 <img width="75%" class="img-pixelated" src="/images/c64/lines/lines-scroll.gif" />
+</div>
 
-This trick was one of my favorites in this compo.  It was also independently discovered by pretty much all the participants.
+This trick was one of my favorites in this compo.  It was also independently discovered by pretty much every participant.
 
 ## Trick 2: Self-modifying code
 
@@ -355,7 +368,7 @@ addr0:  sta $0400 + 24*40
 
 ## Trick 3: Exploiting the power on state
 
-It was considered OK to make wild assumptions about the running environment: the line drawing PRG is the first thing that runs after C64 power on, and there was no requirement to exit cleanly back to the BASIC prompt.  So anything you find from the initial environment upon entry to your PRG, you can and should use to your advantage.  Here are some of the things that were considered "constant" upon entry to the PRG:
+Making wild assumptions about the running environment was considered OK in this compo: the line drawing PRG is the first thing that's run after C64 power on, and there was no requirement to exit cleanly back to the BASIC prompt.  So anything you find from the initial environment upon entry to your PRG, you can and should use to your advantage.  Here are some of the things that were considered "constant" upon entry to the PRG:
 
 - A, X, Y registers were assumed to be all zeros
 - All CPU flags cleared
@@ -365,9 +378,11 @@ Similarly, if you called any KERNAL ROM routines, you could totally take advanta
 
 After the first few size-optimization passes, everyone turned their eyes on this machine monitor view to look for any interesting constants:
 
+<div class="center overflow">
 <img class="img-pixelated" src="/images/c64/lines/monitor-screenshot.png" />
+</div>
 
-Indeed, the zeropage did contain some useful values:
+The zeropage indeed contains some useful values:
 
 - `$d5`: 39/$27 == line length - 1
 - `$22`: 64/$40 == initial value for line slope counter
@@ -393,11 +408,11 @@ xloop:
         bpl xloop    ; 0803: 10 FC    BPL $0801
 ```
 
-Philip's [winning entry](https://github.com/fsphil/tinyx/blob/master/x34/x34.s) takes this to the extreme.  Recall the address of the last char row `$07C0` (==`$0400+24*40`).  This value does not exist in the zeropage on init.  However, as a side-effect of how the ROM `$E8EA` (scroll up) subroutine uses zeropage temporaries, addresses `$D1-$D2` will contain `$07C0` on return from this function.  So instead of `STA $07C0,x` to store a pixel, you can use the indirect-indexed addressing mode and write `STA ($D1),y` to save a byte.
+Philip's [winning entry](https://github.com/fsphil/tinyx/blob/master/x34/x34.s) takes this to the extreme.  Recall the address of the last char row `$07C0` (==`$0400+24*40`).  This value does not exist in the zeropage on init.  However, as a side-effect of how the ROM "scroll up" subroutine uses zeropage temporaries, addresses `$D1-$D2` will contain `$07C0` on return from this function.  So instead of `STA $07C0,x` to store a pixel, you can use the one byte shorter indirect-indexed addressing mode store `STA ($D1),y`.
 
 Philip went even further with his `$E8EA` exploits, you should read through his 32 byte work of art [here](https://github.com/fsphil/tinyx/blob/master/x32/x32.s).
 
-## Trick 4: BASIC startup tricks
+## Trick 4: Smaller startup
 
 A typical C64 PRG binary file contains the following:
 
@@ -413,9 +428,11 @@ The BASIC startup sequence looks like this (addresses `$801-$80C`):
 
 Without going into details about [tokenized BASIC memory layout](https://www.c64-wiki.com/wiki/BASIC_token), this sequence more or less amounts to "10 SYS 2061".  Address `2061` (`$080D`) is where our actual machine code program starts when the BASIC interpreter executes the SYS command.
 
-14 bytes just to get going feels excessive.  Philip and Geir had used some clever tricks to get rid of the BASIC sequence altogether.  This requires that the PRG is loaded with `LOAD "*",8,1` as `LOAD "*",8` ignores the PRG loading address (the first two bytes) and always loads to `$0801`.
+14 bytes just to get going feels excessive.  Philip, Mathlev and Geir had used some clever tricks to get rid of the BASIC sequence altogether.  This requires that the PRG is loaded with `LOAD "*",8,1` as `LOAD "*",8` ignores the PRG loading address (the first two bytes) and always loads to `$0801`.
 
+<div class="center">
 <img width="75%" class="img-pixelated" src="/images/c64/lines/vice-screen-sys.png" />
+</div>
 
 Two methods were used:
 
@@ -513,7 +530,7 @@ done:
 inf:    jmp inf
 ```
 
-The control flow looks a lot like what a C compiler would output from a structured program.  The code to skip introduced a new `JMP abs` instruction that takes up 3 bytes.  Conditional branches use a relative 8-bit immediate field for the branch target, and thus they're only two bytes a piece.
+The control flow looks a lot like what a C compiler would output from a structured program.  The code to skip the last scroll introduced a new `JMP abs` instruction that takes up 3 bytes.  Conditional branches are only two bytes as they encode the branch target using a relative 8-bit immediate.
 
 The "skip last scroll" JMP can be avoided by moving the scroll up call to the top of the loop, and restructuring the control flow a bit.  This is the pattern Philip had come up with:
 
@@ -587,9 +604,7 @@ p1:     sta $07C0    ; Draw first block (left > right line)
 
 Once the competition was over, everyone shared code and notes, and a number of lively conversations took place on how to do even better.
 
-I'm not going into these entries in more detail, but you should definitely check them out.  There's some very cool stuff in them!
-
-You can find these entries here:
+I won't be reviewing them here.  You should check them out yourself -- there's some really cool stuff in them:
 
 - [Philip - 33 bytes](https://gist.github.com/fsphil/05deaa06804b9b2054260b616cafed4b)
 - [Philip - 32 bytes](https://gist.github.com/fsphil/01bda1a9dd58c219002ddd6e18b36c3f)
