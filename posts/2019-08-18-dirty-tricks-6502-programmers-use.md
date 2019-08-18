@@ -564,7 +564,7 @@ for (int x = 0; x < 40; x++) {
 }
 ```
 
-This is translates to pretty compact assembly.  The slope counter variants tended to be even smaller, though.
+This translates to pretty compact assembly.  The slope counter variants tended to be even smaller, though.
 
 ## Winner entry
 
