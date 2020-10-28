@@ -47,6 +47,13 @@ Crop the input image and then make a .gif (`+repage` is required to actually cro
 convert -crop 104x30+62+22 +repage -loop 0 -delay 300 image?.png result.gif
 ```
 
+Convert a .pdf to .png files at a 1080p resolution (useful to export high res PNGs out of Google Slides):
+
+```
+# In Google Slides: Download as PDF
+magick convert -density 300 input.pdf -quality 100 -resize x1080 "slide.png"
+```
+
 Video files
 -----------
 
