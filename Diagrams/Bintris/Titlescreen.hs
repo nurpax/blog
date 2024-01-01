@@ -113,8 +113,8 @@ titlescreenRasterSvg =
           (w', h') = (w/320.0*xw, h/200.0*yh)
       in S.rect ! A.width (toValue w') ! A.height (toValue h') ! ax x' ! ay y'
 
-titlescreenRaster :: String
-titlescreenRaster = renderSvg titlescreenRasterSvg
+titlescreenRaster :: T.Text
+titlescreenRaster = T.pack . renderSvg $ titlescreenRasterSvg
 
 test :: IO ()
 test = do

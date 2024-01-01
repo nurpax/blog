@@ -6,7 +6,6 @@ series: bintris-c64
 thumb: /images/bintris/bintris-writer-fld.gif
 scripts: /js/build/timing-diagram.js
 ---
-
 ``` {.hakyll-inline-css}
 @font-face {
      font-family: "C64 Pro Local";

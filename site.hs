@@ -7,6 +7,7 @@ import           Data.List (elem)
 import           Data.Maybe (listToMaybe)
 import           Data.Monoid   ((<>), mconcat)
 import qualified GHC.IO.Encoding as E
+import qualified Data.Text as T
 
 import           Hakyll
 import           Hakyll.Core.Metadata
@@ -97,7 +98,7 @@ removeInlineCss doc = walk removeCSS doc
   where
     removeCSS block@(CodeBlock (_, classes, _) _) =
       if "hakyll-inline-css" `elem` classes then
-        Null
+        Plain []
       else
         block
     removeCSS elt = elt
@@ -113,7 +114,7 @@ extractInlineCss body = do
     extractCssBlock :: Block -> [String]
     extractCssBlock block@(CodeBlock (_, classes, _) b) =
       if "hakyll-inline-css" `elem` classes then
-        [b]
+        [T.unpack b]
       else
         []
     extractCssBlock block = []

@@ -75,11 +75,11 @@ gamescreenSvg =
     irq0Color    = "#393"
     irq1Color    = "#933"
 
-gamescreen :: String
-gamescreen = renderSvg gamescreenSvg
+gamescreen :: T.Text
+gamescreen = T.pack . renderSvg $ gamescreenSvg
 
 test :: IO ()
 test = do
  let fname = "test.svg"
  putStrLn ("writing svg to " ++ fname)
- writeFile fname gamescreen
+ writeFile fname (T.unpack gamescreen)

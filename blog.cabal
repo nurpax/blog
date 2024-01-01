@@ -1,12 +1,12 @@
+cabal-version:       2.4
 name:                blog
 version:             0.1.0.0
 synopsis:            nurpax.github.io blog
 homepage:            http://nurpax.github.com/blog
-license:             AllRightsReserved
+license:             NONE
 author:              Janne Hellsten
 maintainer:          jjhellst@gmail.com
 build-type:          Simple
-cabal-version:       >=1.8
 
 executable blog
   hs-source-dirs:    .
@@ -15,9 +15,10 @@ executable blog
                      Diagrams.Bintris.Gamescreen
                      Diagrams.Bintris.Titlescreen
                      Diagrams.Bintris.Util
-  build-depends:     base >= 4.5 && < 5
-                   , hakyll >= 4.12.2.0
-                   , blaze-svg >= 0.3.6.1
+  build-depends:     base
+                   , hakyll
+                   , blaze-markup
+                   , blaze-svg >= 0.3.7
                    , text
                    , pandoc
                    , pandoc-types
