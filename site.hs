@@ -81,7 +81,6 @@ pandocCompilerXform f = do
           readerExtensions = disableExtension Ext_native_divs readerExts
         }
 
-
 substDiagrams :: Pandoc -> Pandoc
 substDiagrams doc = walk bintrisSvg doc
   where
